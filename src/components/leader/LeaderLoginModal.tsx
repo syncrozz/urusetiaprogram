@@ -115,38 +115,44 @@ export const LeaderLoginModal: React.FC<LeaderLoginModalProps> = ({ isOpen, onCl
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Akses Ujian Pantas (Demo Ketua Unit)</span>
+              <span>Ketua Unit Berdaftar</span>
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {leaders.slice(0, 4).map((leader) => (
-              <button
-                key={leader.id}
-                type="button"
-                onClick={() => {
-                  setIdentifier(leader.studentId);
-                  handleLogin(leader.studentId);
-                }}
-                className="text-left p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 transition group flex items-center justify-between"
-              >
-                <div className="min-w-0 pr-2">
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-emerald-700">
-                    {leader.nickname ? `${leader.nickname} (${leader.fullName.split(' ')[0]})` : leader.fullName}
-                  </p>
-                  <p className="text-[11px] text-slate-500 font-mono">
-                    ID: {leader.studentId} • IC: {leader.icLast4}
-                  </p>
-                  <p className="text-[10px] text-emerald-600 font-medium">
-                    {leader.position || leader.department || 'Ketua Unit'}
-                  </p>
-                </div>
-                <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center shrink-0 transition">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                </div>
-              </button>
-            ))}
-          </div>
+          {leaders.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {leaders.slice(0, 4).map((leader) => (
+                <button
+                  key={leader.id}
+                  type="button"
+                  onClick={() => {
+                    setIdentifier(leader.studentId);
+                    handleLogin(leader.studentId);
+                  }}
+                  className="text-left p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 transition group flex items-center justify-between"
+                >
+                  <div className="min-w-0 pr-2">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-emerald-700">
+                      {leader.nickname ? `${leader.nickname} (${leader.fullName.split(' ')[0]})` : leader.fullName}
+                    </p>
+                    <p className="text-[11px] text-slate-500 font-mono">
+                      ID: {leader.studentId} • IC: {leader.icLast4}
+                    </p>
+                    <p className="text-[10px] text-emerald-600 font-medium">
+                      {leader.position || leader.department || 'Ketua Unit'}
+                    </p>
+                  </div>
+                  <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center shrink-0 transition">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-slate-700 text-center text-xs text-slate-500">
+              Tiada ketua unit berdaftar dalam pangkalan data semasa.
+            </div>
+          )}
         </div>
       </div>
     </div>

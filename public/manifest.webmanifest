@@ -1,0 +1,44 @@
+{
+  "name": "Syncrozz - Pengurusan Urusetia Program",
+  "short_name": "Syncrozz",
+  "description": "Platform Penyelarasan & Pemantauan Kesediaan Urusetia Program Berasaskan Unit & Templat Blueprint",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#059669",
+  "orientation": "any",
+  "scope": "/",
+  "lang": "ms",
+  "categories": ["productivity", "education", "business", "utilities"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Pusat Urusetia",
+      "short_name": "Urusetia",
+      "description": "Buka Dashboard Pemantauan Urusetia",
+      "url": "/",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Log Masuk Ketua Unit",
+      "short_name": "Ketua Unit",
+      "description": "Akses Portal Kemaskini Ketua Unit",
+      "url": "/?view=leader",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+    }
+  ]
+}

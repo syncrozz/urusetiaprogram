@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Program, AuthSession, Person } from '../../types';
 import { secretariatStore } from '../../lib/storage';
+import { usePWAInstall } from '../../lib/pwa';
 import {
   Layers,
   ShieldCheck,
@@ -13,6 +14,8 @@ import {
   LogOut,
   ChevronDown,
   Sparkles,
+  Smartphone,
+  Download,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -42,6 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [showProgramDropdown, setShowProgramDropdown] = useState(false);
   const [showRoleMenu, setShowRoleMenu] = useState(false);
+  const { isInstallable, isInstalled, triggerInstall } = usePWAInstall();
 
   const handleProgramSelect = (progId: string) => {
     secretariatStore.setSelectedProgramId(progId);
@@ -159,6 +163,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
+            {/* PWA Install Button (When prompt is available) */}
+            {isInstallable && (
+              <button
+                onClick={triggerInstall}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-xs animate-bounce"
+                title="Pasang aplikasi Syncrozz ke skrin utama"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Pasang App (PWA)</span>
+                <span className="sm:hidden">Pasang</span>
+              </button>
+            )}
+
             {/* Secretariat Report Button */}
             <button
               onClick={onOpenSecretariatReport}
@@ -175,13 +192,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => setShowRoleMenu(!showRoleMenu)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
                   authSession.role === 'MASTER_ADMIN'
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                     : authSession.role === 'KETUA_UNIT'
                     ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                     : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700'
                 }`}
               >
-                {authSession.role === 'MASTER_ADMIN' && <Lock className="w-3.5 h-3.5 text-amber-400" />}
+                {authSession.role === 'MASTER_ADMIN' && <Lock className="w-3.5 h-3.5 text-emerald-400" />}
                 {authSession.role === 'KETUA_UNIT' && <UserCheck className="w-3.5 h-3.5 text-emerald-400" />}
                 {authSession.role === 'ADMIN' && <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />}
 

@@ -17,13 +17,15 @@ import {
   INITIAL_CATEGORIES,
   INITIAL_TEMPLATES,
   INITIAL_PROGRAMS,
+  INITIAL_ADMIN_PROFILE,
   DEMO_PEOPLE,
   INITIAL_UPDATES,
   INITIAL_LOGS,
 } from '../data/initialData';
 import { calculateUnitProgress, calculateProgramReadiness } from './utils';
+import { pushStateToFirebase, fetchStateFromFirebase, subscribeToFirebaseState } from './firebase';
 
-const STORAGE_KEY = 'syncrozz_secretariat_state_v1';
+const STORAGE_KEY = 'syncrozz_secretariat_state_v2';
 const MASTER_PIN = '5313';
 
 interface AppState {
@@ -37,32 +39,61 @@ interface AppState {
   selectedProgramId: string;
 }
 
+let isSyncingFromRemote = false;
+let pushDebounceTimer: any = null;
+
 // Initial state loading
 function loadInitialState(): AppState {
+  const legacyMockIds = new Set([
+    'usr-zara',
+    'usr-idi',
+    'usr-sharifah',
+    'usr-zulaikha-bendahari',
+    'usr-dzul',
+    'usr-rabi',
+    'usr-airra',
+    'usr-aya',
+    'usr-faqihah',
+    'usr-admin-khairi',
+  ]);
+
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    // Check both current and legacy storage keys
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('syncrozz_secretariat_state_v1');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed.programs && parsed.templates && parsed.categories) {
-        // Merge or upgrade people to ensure new fields and initial students are present
-        const mergedPeople = Array.isArray(parsed.people) && parsed.people.length >= DEMO_PEOPLE.length
-          ? parsed.people
-          : DEMO_PEOPLE;
+        let userPeople = Array.isArray(parsed.people) ? parsed.people : [];
+        // Filter out all legacy demo IDs and admins from the student list
+        userPeople = userPeople.filter((p: Person) => !legacyMockIds.has(p.id) && p.role !== 'ADMIN');
+
+        // Clean unassigned or mock leaders from units
+        const programs = (parsed.programs || INITIAL_PROGRAMS).map((prog: Program) => ({
+          ...prog,
+          units: (prog.units || []).map((u: ProgramUnit) => {
+            if (u.leaderId && legacyMockIds.has(u.leaderId)) {
+              return { ...u, leaderId: undefined, leader: undefined };
+            }
+            return u;
+          }),
+        }));
+
+        const adminPerson = INITIAL_ADMIN_PROFILE;
 
         return {
           categories: parsed.categories || INITIAL_CATEGORIES,
           templates: parsed.templates || INITIAL_TEMPLATES,
-          programs: parsed.programs || INITIAL_PROGRAMS,
-          people: mergedPeople,
+          programs: programs,
+          people: userPeople,
           updates: parsed.updates || INITIAL_UPDATES,
           logs: parsed.logs || INITIAL_LOGS,
-          authSession: parsed.authSession || {
+          authSession: {
             role: 'ADMIN',
-            person: mergedPeople.find((p: Person) => p.role === 'ADMIN') || DEMO_PEOPLE[DEMO_PEOPLE.length - 1],
-            programId: 'prog-theatre-2026',
+            person: adminPerson,
+            programId: programs[0]?.id || 'prog-theatre-2026',
             isMasterUnlocked: false,
           },
-          selectedProgramId: parsed.selectedProgramId || 'prog-theatre-2026',
+          selectedProgramId: parsed.selectedProgramId || programs[0]?.id || 'prog-theatre-2026',
         };
       }
     }
@@ -74,12 +105,12 @@ function loadInitialState(): AppState {
     categories: INITIAL_CATEGORIES,
     templates: INITIAL_TEMPLATES,
     programs: INITIAL_PROGRAMS,
-    people: DEMO_PEOPLE,
+    people: [],
     updates: INITIAL_UPDATES,
     logs: INITIAL_LOGS,
     authSession: {
       role: 'ADMIN',
-      person: DEMO_PEOPLE.find((p) => p.role === 'ADMIN') || DEMO_PEOPLE[DEMO_PEOPLE.length - 1],
+      person: INITIAL_ADMIN_PROFILE,
       programId: 'prog-theatre-2026',
       isMasterUnlocked: false,
     },
@@ -97,6 +128,50 @@ function saveState() {
     console.error('Failed to persist state:', e);
   }
   listeners.forEach((listener) => listener(currentState));
+
+  // Sync to Firebase if not currently applying a remote incoming update
+  if (!isSyncingFromRemote) {
+    if (pushDebounceTimer) clearTimeout(pushDebounceTimer);
+    pushDebounceTimer = setTimeout(() => {
+      pushStateToFirebase(currentState);
+    }, 600);
+  }
+}
+
+// Initialize Firestore live listener for real-time synchronization across devices
+if (typeof window !== 'undefined') {
+  try {
+    subscribeToFirebaseState((remoteData) => {
+      if (remoteData && remoteData.categories && remoteData.programs) {
+        isSyncingFromRemote = true;
+        currentState.categories = remoteData.categories || currentState.categories;
+        currentState.templates = remoteData.templates || currentState.templates;
+        currentState.programs = remoteData.programs || currentState.programs;
+        currentState.people = (remoteData.people || []).filter((p: Person) => p.role !== 'ADMIN');
+        currentState.updates = remoteData.updates || currentState.updates;
+        currentState.logs = remoteData.logs || currentState.logs;
+
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
+        } catch (e) {
+          // ignore
+        }
+        listeners.forEach((listener) => listener(currentState));
+        isSyncingFromRemote = false;
+      }
+    });
+
+    // Initial check & seed remote if empty
+    fetchStateFromFirebase().then((remoteData) => {
+      if (!remoteData || !remoteData.programs || remoteData.programs.length === 0) {
+        pushStateToFirebase(currentState);
+      }
+    }).catch(() => {
+      // offline fallback
+    });
+  } catch (err) {
+    console.warn('[Firebase Sync] Realtime sync listener initialization error:', err);
+  }
 }
 
 export const secretariatStore = {
@@ -787,10 +862,29 @@ export const secretariatStore = {
       entityType: 'CATEGORY',
       entityId: cat.id,
       entityName: cat.name,
-      details: `Kategori utama [${cat.name}] dikemaskini dalam Master Configuration.`,
+      details: `Kategori utama [${cat.name}] disimpan dalam Master Configuration.`,
     });
 
     saveState();
+  },
+
+  deleteCategory(categoryId: string): boolean {
+    const cat = currentState.categories.find((c) => c.id === categoryId);
+    if (!cat) return false;
+
+    // Remove category
+    currentState.categories = currentState.categories.filter((c) => c.id !== categoryId);
+
+    this.addActivityLog({
+      action: 'Padam Master Category',
+      entityType: 'CATEGORY',
+      entityId: categoryId,
+      entityName: cat.name,
+      details: `Kategori utama [${cat.name}] telah dipadam daripada Master Configuration.`,
+    });
+
+    saveState();
+    return true;
   },
 
   saveTemplate(template: ProgramTemplate) {
@@ -953,17 +1047,39 @@ export const secretariatStore = {
     return currentState.people.length;
   },
 
+  clearAllStudents() {
+    currentState.people = [];
+
+    // Unassign all leaders from program units
+    currentState.programs.forEach((prog) => {
+      prog.units.forEach((unit) => {
+        unit.leaderId = undefined;
+        unit.leader = undefined;
+      });
+    });
+
+    this.addActivityLog({
+      action: 'Kosongkan Direktori Pelajar',
+      entityType: 'AUTH',
+      entityId: 'clear-all-students',
+      entityName: 'Direktori Pelajar',
+      details: 'Semua rekod pelajar dipadam. Senarai sedia menerima data baharu.',
+    });
+
+    saveState();
+  },
+
   resetToDefaultSeed() {
     currentState = {
       categories: JSON.parse(JSON.stringify(INITIAL_CATEGORIES)),
       templates: JSON.parse(JSON.stringify(INITIAL_TEMPLATES)),
       programs: JSON.parse(JSON.stringify(INITIAL_PROGRAMS)),
-      people: JSON.parse(JSON.stringify(DEMO_PEOPLE)),
+      people: [],
       updates: JSON.parse(JSON.stringify(INITIAL_UPDATES)),
       logs: JSON.parse(JSON.stringify(INITIAL_LOGS)),
       authSession: {
         role: 'ADMIN',
-        person: DEMO_PEOPLE[5],
+        person: INITIAL_ADMIN_PROFILE,
         programId: 'prog-theatre-2026',
         isMasterUnlocked: false,
       },
@@ -984,16 +1100,18 @@ export const secretariatStore = {
     try {
       const parsed = JSON.parse(jsonString);
       if (parsed.categories && parsed.templates && parsed.programs) {
+        const peopleList = (parsed.people || []).filter((p: Person) => p.role !== 'ADMIN');
+
         currentState = {
           categories: parsed.categories,
           templates: parsed.templates,
           programs: parsed.programs,
-          people: parsed.people || DEMO_PEOPLE,
+          people: peopleList,
           updates: parsed.updates || [],
           logs: parsed.logs || [],
-          authSession: parsed.authSession || {
+          authSession: {
             role: 'ADMIN',
-            person: DEMO_PEOPLE[5],
+            person: INITIAL_ADMIN_PROFILE,
             programId: parsed.programs[0]?.id || 'prog-theatre-2026',
             isMasterUnlocked: false,
           },

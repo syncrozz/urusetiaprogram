@@ -1,0 +1,47 @@
+{
+  "entities": {
+    "SystemState": {
+      "title": "SystemState",
+      "description": "Complete state of the secretariat management platform",
+      "type": "object",
+      "properties": {
+        "categories": {
+          "type": "array",
+          "description": "List of core secretariat categories"
+        },
+        "templates": {
+          "type": "array",
+          "description": "List of program templates"
+        },
+        "programs": {
+          "type": "array",
+          "description": "List of programs and units"
+        },
+        "people": {
+          "type": "array",
+          "description": "Directory of students and leaders"
+        },
+        "updates": {
+          "type": "array",
+          "description": "History of unit updates"
+        },
+        "logs": {
+          "type": "array",
+          "description": "System activity logs"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp of last update"
+        }
+      },
+      "required": ["categories", "templates", "programs", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/system_state/{stateId}": {
+      "schema": "SystemState",
+      "description": "Central synchronization document for secretariat state"
+    }
+  }
+}

@@ -61,7 +61,9 @@ export const UnitLeaderAssignModal: React.FC<UnitLeaderAssignModalProps> = ({
     onClose();
   };
 
-  const safePeople = Array.isArray(people) ? people : [];
+  const safePeople = (Array.isArray(people) ? people : []).filter(
+    (p) => p && p.role !== 'ADMIN' && p.id !== 'usr-admin-khairi'
+  );
   const filteredPeople = safePeople.filter(
     (p) =>
       p &&

@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Secretariat system rules: Allow read and write for app data synchronization
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
