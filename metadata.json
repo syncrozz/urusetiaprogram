@@ -1,0 +1,6 @@
+{
+  "name": "Syncrozz Program Secretariat",
+  "description": "Platform Pengurusan & Kesiapsiagaan Urusetia Program Berasaskan Unit & Template",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
