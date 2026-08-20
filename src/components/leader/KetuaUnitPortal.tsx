@@ -191,7 +191,7 @@ export const KetuaUnitPortal: React.FC<KetuaUnitPortalProps> = ({
             </div>
 
             {/* Readiness Dial Card */}
-            <div className="bg-slate-800/90 rounded-xl p-3 sm:p-3.5 border border-slate-700 flex items-center gap-4 min-w-[200px]">
+            <div className="bg-slate-800/90 rounded-xl p-3 sm:p-3.5 border border-slate-700 flex items-center gap-4 w-full sm:w-auto">
               <div className="relative w-12 h-12 shrink-0 flex items-center justify-center">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                   <path

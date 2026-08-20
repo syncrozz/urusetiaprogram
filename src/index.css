@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+html, body, #root {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* Prevent horizontal scrollbars caused by child elements */
+* {
+  box-sizing: border-box;
+}

@@ -63,47 +63,47 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 text-white shadow-md">
+    <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 text-white shadow-md w-full max-w-full overflow-hidden">
       {/* Top Banner / Program Selector Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-2">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full">
+        <div className="flex items-center justify-between h-16 gap-1.5 sm:gap-3">
           {/* Logo & Brand Identity */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-indigo-600 border border-indigo-500/30 flex items-center justify-center shadow-xs shrink-0">
-              <Layers className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-indigo-600 border border-indigo-500/30 flex items-center justify-center shadow-xs shrink-0">
+              <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold tracking-tight text-base sm:text-lg text-white font-mono">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold tracking-tight text-sm sm:text-lg text-white font-mono">
                   SYNCROZZ
                 </span>
                 <span className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded">
                   SECRETARIAT
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium tracking-wide hidden sm:block">
+              <p className="text-[10px] text-slate-400 font-medium tracking-wide hidden md:block">
                 Rancang • Urus • Pantau • Selesai
               </p>
             </div>
           </div>
 
           {/* Active Program Selector (Centralized) */}
-          <div className="relative">
+          <div className="relative min-w-0 max-w-[140px] xs:max-w-[180px] sm:max-w-xs md:max-w-sm flex-1 sm:flex-initial mx-1">
             <button
               onClick={() => setShowProgramDropdown(!showProgramDropdown)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 text-left transition max-w-[180px] sm:max-w-xs md:max-w-sm"
+              className="w-full flex items-center justify-between gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 text-left transition"
               aria-expanded={showProgramDropdown}
             >
               <div className="truncate min-w-0">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Program Aktif
+                <p className="text-[8px] sm:text-[9px] font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <span className="truncate">Program Aktif</span>
                 </p>
-                <p className="text-xs font-semibold text-white truncate">
+                <p className="text-[11px] sm:text-xs font-semibold text-white truncate">
                   {activeProgram?.name || 'Pilih Program'}
                 </p>
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-0.5" />
             </button>
 
             {showProgramDropdown && (
@@ -149,17 +149,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Quick Actions & Role Switcher */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Escalation Alert Badge */}
             {openAssistanceCount > 0 && (
               <button
                 onClick={() => setActiveTab('assistance')}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-600/20 border border-red-500/40 text-red-300 hover:bg-red-600/30 text-xs font-bold transition animate-pulse"
+                className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg bg-red-600/20 border border-red-500/40 text-red-300 hover:bg-red-600/30 text-xs font-bold transition animate-pulse"
                 title={`${openAssistanceCount} unit memohon bantuan segera`}
               >
                 <AlertCircle className="w-3.5 h-3.5 text-red-400" />
                 <span className="hidden md:inline">{openAssistanceCount} Bantuan Diperlukan</span>
-                <span className="md:hidden">{openAssistanceCount}</span>
+                <span className="md:hidden text-[11px] font-mono">{openAssistanceCount}</span>
               </button>
             )}
 
@@ -167,12 +167,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             {isInstallable && (
               <button
                 onClick={triggerInstall}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-xs animate-bounce"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-xs animate-bounce"
                 title="Pasang aplikasi Syncrozz ke skrin utama"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Pasang App (PWA)</span>
-                <span className="sm:hidden">Pasang</span>
+                <span className="sm:hidden text-[10px]">Pasang</span>
               </button>
             )}
 
@@ -190,7 +190,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="relative">
               <button
                 onClick={() => setShowRoleMenu(!showRoleMenu)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
+                className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
                   authSession.role === 'MASTER_ADMIN'
                     ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                     : authSession.role === 'KETUA_UNIT'
@@ -209,7 +209,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ? authSession.person?.fullName.split(' ')[0] || 'Ketua Unit'
                     : 'Admin Program'}
                 </span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400" />
               </button>
 
               {showRoleMenu && (
@@ -290,12 +290,12 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Navigation Tabs (Admin / Master Admin Mode) */}
       {authSession.role !== 'KETUA_UNIT' && (
-        <div className="bg-slate-950 border-t border-slate-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <nav className="flex space-x-1 sm:space-x-2 overflow-x-auto py-1.5 scrollbar-none text-xs font-medium">
+        <div className="bg-slate-950 border-t border-slate-800 w-full max-w-full overflow-hidden">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full">
+            <nav className="flex space-x-1 sm:space-x-2 overflow-x-auto py-1.5 scrollbar-none text-xs font-medium w-full">
               <button
                 onClick={() => setActiveTab('readiness')}
-                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                   activeTab === 'readiness'
                     ? 'bg-indigo-600 text-white font-bold shadow-xs'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
@@ -308,7 +308,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               <button
                 onClick={() => setActiveTab('units')}
-                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                   activeTab === 'units'
                     ? 'bg-indigo-600 text-white font-bold shadow-xs'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
@@ -321,7 +321,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               <button
                 onClick={() => setActiveTab('assistance')}
-                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                   activeTab === 'assistance'
                     ? 'bg-red-600 text-white font-bold shadow-xs'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
@@ -339,7 +339,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               <button
                 onClick={() => setActiveTab('programs')}
-                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                   activeTab === 'programs'
                     ? 'bg-indigo-600 text-white font-bold shadow-xs'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
@@ -351,7 +351,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               <button
                 onClick={() => setActiveTab('timeline')}
-                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                   activeTab === 'timeline'
                     ? 'bg-indigo-600 text-white font-bold shadow-xs'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
@@ -363,7 +363,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               <button
                 onClick={() => setActiveTab('activity')}
-                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                   activeTab === 'activity'
                     ? 'bg-indigo-600 text-white font-bold shadow-xs'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
@@ -376,7 +376,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {authSession.role === 'MASTER_ADMIN' && (
                 <button
                   onClick={() => setActiveTab('master_config')}
-                  className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 border border-amber-500/50 ${
+                  className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 border border-amber-500/50 shrink-0 ${
                     activeTab === 'master_config'
                       ? 'bg-amber-600 text-white font-bold'
                       : 'text-amber-400 hover:bg-amber-950/40'

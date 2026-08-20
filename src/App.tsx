@@ -81,7 +81,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-100/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
       {/* Top Universal Navbar */}
       <Navbar
         programs={storeState.programs}
@@ -97,7 +97,7 @@ export default function App() {
       />
 
       {/* Main Workspace Body */}
-      <main className="flex-1">
+      <main className="flex-1 w-full max-w-full overflow-x-hidden">
         {storeState.authSession.role === 'KETUA_UNIT' &&
         storeState.authSession.person &&
         ketuaUnitActiveUnit &&
@@ -110,7 +110,7 @@ export default function App() {
             onBackToAdmin={() => secretariatStore.loginAsAdmin()}
           />
         ) : (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 w-full min-w-0">
             {activeTab === 'readiness' && activeProgram && (
               <ProgramReadinessOverview
                 program={activeProgram}
