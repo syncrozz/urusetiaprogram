@@ -70,7 +70,8 @@ export const UnitDetailsModal: React.FC<UnitDetailsModalProps> = ({
     setIsAddingReq(false);
   };
 
-  const completedCount = unit.requirements.filter((r) => r.status === 'COMPLETED').length;
+  const unitRequirements = Array.isArray(unit?.requirements) ? unit.requirements : [];
+  const completedCount = unitRequirements.filter((r) => r.status === 'COMPLETED').length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/75 backdrop-blur-xs animate-fadeIn">

@@ -248,7 +248,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <Lock className="w-4 h-4 text-amber-400" />
                       <div>
                         <p className="font-semibold">Konfigurasi Master Admin</p>
-                        <p className="text-[10px] text-slate-400">PIN Keselamatan (5313)</p>
+                        <p className="text-[10px] text-slate-400">PIN Keselamatan Diperlukan</p>
                       </div>
                     </button>
                   </div>
@@ -286,7 +286,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 {activeTab === 'readiness' && <span className="w-1.5 h-1.5 rounded-full bg-white mr-0.5" />}
                 <CheckCircle className="w-3.5 h-3.5" />
-                <span>Kesiapsiagaan Program</span>
+                <span>Kesediaan Program</span>
               </button>
 
               <button

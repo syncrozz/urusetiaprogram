@@ -40,7 +40,7 @@ export const LeaderLoginModal: React.FC<LeaderLoginModalProps> = ({ isOpen, onCl
     }, 300);
   };
 
-  const leaders = people.filter((p) => p.role === 'KETUA_UNIT');
+  const leaders = (Array.isArray(people) ? people : []).filter((p) => p.role === 'KETUA_UNIT');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs animate-fadeIn">
@@ -70,7 +70,7 @@ export const LeaderLoginModal: React.FC<LeaderLoginModalProps> = ({ isOpen, onCl
         <div className="space-y-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-              No. ID Pelajar ATAU 4 Digit Terakhir No. IC
+              No. ID Pelajar / 4 Digit Terakhir No. IC / Gmail
             </label>
             <div className="relative">
               <input
@@ -80,7 +80,7 @@ export const LeaderLoginModal: React.FC<LeaderLoginModalProps> = ({ isOpen, onCl
                   setIdentifier(e.target.value);
                   setError('');
                 }}
-                placeholder="cth: B032110450 atau 5313"
+                placeholder="cth: PDL-2502-078, 0480, atau nurzara.sofea07@gmail.com"
                 className="w-full py-3.5 px-4 pr-12 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium text-base focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
                 autoFocus
               />
@@ -132,13 +132,13 @@ export const LeaderLoginModal: React.FC<LeaderLoginModalProps> = ({ isOpen, onCl
               >
                 <div className="min-w-0 pr-2">
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-emerald-700">
-                    {leader.fullName.split(' ')[0]} {leader.fullName.split(' ')[1] || ''}
+                    {leader.nickname ? `${leader.nickname} (${leader.fullName.split(' ')[0]})` : leader.fullName}
                   </p>
                   <p className="text-[11px] text-slate-500 font-mono">
                     ID: {leader.studentId} • IC: {leader.icLast4}
                   </p>
                   <p className="text-[10px] text-emerald-600 font-medium">
-                    {leader.department || 'Ketua Unit'}
+                    {leader.position || leader.department || 'Ketua Unit'}
                   </p>
                 </div>
                 <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center shrink-0 transition">

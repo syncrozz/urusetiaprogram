@@ -51,9 +51,11 @@ export default function App() {
     storeState.programs.find((p) => p.id === storeState.selectedProgramId) ||
     storeState.programs[0];
 
-  // Count open assistance tickets
+  // Count open assistance tickets safely
   const openAssistanceCount =
-    activeProgram?.units.filter((u) => u.assistanceStatus === 'OPEN').length || 0;
+    activeProgram?.units && Array.isArray(activeProgram.units)
+      ? activeProgram.units.filter((u) => u.assistanceStatus === 'OPEN').length
+      : 0;
 
   // Handle unit inspection
   const handleInspectUnit = (unit: ProgramUnit) => {
@@ -65,11 +67,11 @@ export default function App() {
   if (storeState.authSession.role === 'KETUA_UNIT' && storeState.authSession.person) {
     const personId = storeState.authSession.person.id;
     // Find unit across programs or in current program
-    ketuaUnitActiveUnit = activeProgram?.units.find((u) => u.leaderId === personId);
+    ketuaUnitActiveUnit = activeProgram?.units?.find((u) => u.leaderId === personId);
     if (!ketuaUnitActiveUnit) {
       // Find in any program
-      for (const prog of storeState.programs) {
-        const u = prog.units.find((unit) => unit.leaderId === personId);
+      for (const prog of storeState.programs || []) {
+        const u = prog.units?.find((unit) => unit.leaderId === personId);
         if (u) {
           ketuaUnitActiveUnit = u;
           break;
@@ -104,7 +106,7 @@ export default function App() {
             program={activeProgram}
             unit={ketuaUnitActiveUnit}
             currentPerson={storeState.authSession.person}
-            updates={storeState.unitUpdates}
+            updates={storeState.updates || []}
             onBackToAdmin={() => secretariatStore.loginAsAdmin()}
           />
         ) : (
@@ -154,13 +156,15 @@ export default function App() {
             )}
 
             {activeTab === 'activity' && (
-              <ActivityLogView logs={storeState.activityLogs} />
+              <ActivityLogView logs={storeState.logs || []} />
             )}
 
             {activeTab === 'master_config' && (
               <MasterAdminPanel
                 categories={storeState.categories}
                 templates={storeState.templates}
+                people={storeState.people}
+                activeProgram={activeProgram}
                 onLock={() => {
                   secretariatStore.loginAsAdmin();
                   setActiveTab('readiness');

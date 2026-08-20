@@ -25,7 +25,8 @@ export const AssistanceHub: React.FC<AssistanceHubProps> = ({ program, onInspect
   const [adminNote, setAdminNote] = useState('');
   const [resolutionStatus, setResolutionStatus] = useState<AssistanceStatus>('RESOLVED');
 
-  const assistanceUnits = program.units.filter((u) => u.assistanceStatus && u.assistanceStatus !== 'NONE');
+  const safeUnits = Array.isArray(program?.units) ? program.units : [];
+  const assistanceUnits = safeUnits.filter((u) => u.assistanceStatus && u.assistanceStatus !== 'NONE');
   const openUnits = assistanceUnits.filter((u) => u.assistanceStatus === 'OPEN');
   const inReviewUnits = assistanceUnits.filter((u) => u.assistanceStatus === 'IN_REVIEW');
   const resolvedUnits = assistanceUnits.filter((u) => u.assistanceStatus === 'RESOLVED');

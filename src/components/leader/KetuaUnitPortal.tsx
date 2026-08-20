@@ -37,7 +37,7 @@ export const KetuaUnitPortal: React.FC<KetuaUnitPortalProps> = ({
   program,
   unit,
   currentPerson,
-  updates,
+  updates = [],
   onBackToAdmin,
 }) => {
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
@@ -49,9 +49,13 @@ export const KetuaUnitPortal: React.FC<KetuaUnitPortalProps> = ({
   const [newReqDesc, setNewReqDesc] = useState('');
   const [newReqPriority, setNewReqPriority] = useState<'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'>('HIGH');
 
-  const unitUpdates = updates.filter((u) => u.unitId === unit.id);
+  const safeUpdates = Array.isArray(updates) ? updates : [];
+  const safeRequirements = Array.isArray(unit?.requirements) ? unit.requirements : [];
+
+  const unitUpdates = safeUpdates.filter((u) => u.unitId === unit?.id);
 
   const handleUpdateStatus = (reqId: string, newStatus: RequirementStatus) => {
+    if (!unit) return;
     secretariatStore.updateRequirement({
       programId: program.id,
       unitId: unit.id,
@@ -73,6 +77,7 @@ export const KetuaUnitPortal: React.FC<KetuaUnitPortalProps> = ({
   };
 
   const handleProgressChange = (reqId: string, newProgress: number) => {
+    if (!unit) return;
     const status: RequirementStatus =
       newProgress === 100 ? 'COMPLETED' : newProgress > 0 ? 'IN_PROGRESS' : 'ACTION_REQUIRED';
 
@@ -86,7 +91,8 @@ export const KetuaUnitPortal: React.FC<KetuaUnitPortalProps> = ({
   };
 
   const handleSaveNote = (reqId: string, note: string) => {
-    const req = unit.requirements.find((r) => r.id === reqId);
+    if (!unit) return;
+    const req = safeRequirements.find((r) => r.id === reqId);
     if (!req) return;
     secretariatStore.updateRequirement({
       programId: program.id,
@@ -99,7 +105,7 @@ export const KetuaUnitPortal: React.FC<KetuaUnitPortalProps> = ({
 
   const handlePostQuickUpdate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!quickNote.trim()) return;
+    if (!quickNote.trim() || !unit) return;
 
     secretariatStore.addUnitUpdate({
       unitId: unit.id,
@@ -113,7 +119,7 @@ export const KetuaUnitPortal: React.FC<KetuaUnitPortalProps> = ({
 
   const handleAddCustomRequirement = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newReqTitle.trim()) return;
+    if (!newReqTitle.trim() || !unit) return;
 
     secretariatStore.addCustomRequirement({
       programId: program.id,
@@ -130,7 +136,7 @@ export const KetuaUnitPortal: React.FC<KetuaUnitPortalProps> = ({
     setIsAddingCustomReq(false);
   };
 
-  const filteredRequirements = unit.requirements.filter((req) => {
+  const filteredRequirements = safeRequirements.filter((req) => {
     if (filterStatus === 'ALL') return true;
     if (filterStatus === 'ACTION_REQUIRED') return req.status === 'ACTION_REQUIRED';
     if (filterStatus === 'IN_PROGRESS') return req.status === 'IN_PROGRESS';
@@ -138,9 +144,9 @@ export const KetuaUnitPortal: React.FC<KetuaUnitPortalProps> = ({
     return true;
   });
 
-  const completedCount = unit.requirements.filter((r) => r.status === 'COMPLETED').length;
-  const inProgressCount = unit.requirements.filter((r) => r.status === 'IN_PROGRESS').length;
-  const actionRequiredCount = unit.requirements.filter((r) => r.status === 'ACTION_REQUIRED').length;
+  const completedCount = safeRequirements.filter((r) => r.status === 'COMPLETED').length;
+  const inProgressCount = safeRequirements.filter((r) => r.status === 'IN_PROGRESS').length;
+  const actionRequiredCount = safeRequirements.filter((r) => r.status === 'ACTION_REQUIRED').length;
 
   return (
     <div className="min-h-screen bg-slate-100/60 dark:bg-slate-950 pb-16">

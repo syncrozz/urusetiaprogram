@@ -16,18 +16,24 @@ interface ActivityLogViewProps {
   logs: ActivityLog[];
 }
 
-export const ActivityLogView: React.FC<ActivityLogViewProps> = ({ logs }) => {
+export const ActivityLogView: React.FC<ActivityLogViewProps> = ({ logs = [] }) => {
   const [search, setSearch] = useState('');
   const [filterAction, setFilterAction] = useState<string>('ALL');
 
-  const filteredLogs = logs.filter((log) => {
+  const safeLogs = Array.isArray(logs) ? logs : [];
+
+  const filteredLogs = safeLogs.filter((log) => {
+    if (!log) return false;
+    const titleText = (log.details || log.action || log.entityName || '').toLowerCase();
+    const performerText = (log.userName || log.userRole || '').toLowerCase();
     const matchesSearch =
-      log.description.toLowerCase().includes(search.toLowerCase()) ||
-      log.performedByName.toLowerCase().includes(search.toLowerCase());
+      titleText.includes(search.toLowerCase()) ||
+      performerText.includes(search.toLowerCase());
 
     if (!matchesSearch) return false;
     if (filterAction === 'ALL') return true;
-    return log.action === filterAction;
+    return log.action?.toLowerCase().includes(filterAction.toLowerCase()) ||
+      log.entityType?.toLowerCase().includes(filterAction.toLowerCase());
   });
 
   return (
@@ -47,7 +53,7 @@ export const ActivityLogView: React.FC<ActivityLogViewProps> = ({ logs }) => {
         </div>
 
         <span className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs font-mono font-bold text-slate-300">
-          {logs.length} Rekod Direkodkan
+          {safeLogs.length} Rekod Direkodkan
         </span>
       </div>
 
@@ -86,9 +92,9 @@ export const ActivityLogView: React.FC<ActivityLogViewProps> = ({ logs }) => {
             Status
           </button>
           <button
-            onClick={() => setFilterAction('ESCALATION_REQUEST')}
+            onClick={() => setFilterAction('ESCALATION')}
             className={`px-3 py-1 rounded-md font-medium transition ${
-              filterAction === 'ESCALATION_REQUEST'
+              filterAction === 'ESCALATION'
                 ? 'bg-red-600 text-white font-bold'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
             }`}
@@ -96,9 +102,9 @@ export const ActivityLogView: React.FC<ActivityLogViewProps> = ({ logs }) => {
             Eskalasi
           </button>
           <button
-            onClick={() => setFilterAction('ASSIGN_LEADER')}
+            onClick={() => setFilterAction('ASSIGN')}
             className={`px-3 py-1 rounded-md font-medium transition ${
-              filterAction === 'ASSIGN_LEADER'
+              filterAction === 'ASSIGN'
                 ? 'bg-indigo-600 text-white font-bold'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
             }`}
@@ -122,28 +128,27 @@ export const ActivityLogView: React.FC<ActivityLogViewProps> = ({ logs }) => {
             >
               <div
                 className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                  log.action === 'ESCALATION_REQUEST'
+                  log.entityType === 'ESCALATION' || log.action?.includes('Eskalasi')
                     ? 'bg-red-100 dark:bg-red-950/50 text-red-600'
-                    : log.action === 'ESCALATION_RESOLVED'
+                    : log.action?.includes('Selesai') || log.action?.includes('COMPLETED')
                     ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600'
-                    : log.action === 'ASSIGN_LEADER'
+                    : log.action?.includes('Lantik')
                     ? 'bg-indigo-100 dark:bg-indigo-950/50 text-indigo-600'
-                    : log.action === 'CREATE_PROGRAM'
+                    : log.entityType === 'PROGRAM'
                     ? 'bg-teal-100 dark:bg-teal-950/50 text-teal-600'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600'
                 }`}
               >
-                {log.action === 'ESCALATION_REQUEST' && <AlertTriangle className="w-4 h-4" />}
-                {log.action === 'ESCALATION_RESOLVED' && <CheckCircle2 className="w-4 h-4" />}
-                {log.action === 'ASSIGN_LEADER' && <UserPlus className="w-4 h-4" />}
-                {log.action === 'CREATE_PROGRAM' && <PlusCircle className="w-4 h-4" />}
-                {log.action === 'UPDATE_STATUS' && <Clock className="w-4 h-4" />}
+                {(log.entityType === 'ESCALATION' || log.action?.includes('Eskalasi')) && <AlertTriangle className="w-4 h-4" />}
+                {!(log.entityType === 'ESCALATION' || log.action?.includes('Eskalasi')) && log.action?.includes('Lantik') && <UserPlus className="w-4 h-4" />}
+                {!(log.entityType === 'ESCALATION' || log.action?.includes('Eskalasi')) && !log.action?.includes('Lantik') && log.entityType === 'PROGRAM' && <PlusCircle className="w-4 h-4" />}
+                {!(log.entityType === 'ESCALATION' || log.action?.includes('Eskalasi')) && !log.action?.includes('Lantik') && log.entityType !== 'PROGRAM' && <Clock className="w-4 h-4" />}
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-bold text-slate-900 dark:text-white truncate">
-                    {log.description}
+                    {log.details || log.entityName || log.action}
                   </p>
                   <span className="text-[10px] text-slate-400 font-mono shrink-0">
                     {formatDateTime(log.createdAt)}
@@ -152,12 +157,20 @@ export const ActivityLogView: React.FC<ActivityLogViewProps> = ({ logs }) => {
 
                 <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500">
                   <span className="font-semibold text-slate-700 dark:text-slate-300">
-                    {log.performedByName}
+                    {log.userName || log.userRole || 'Urusetia'}
                   </span>
                   <span>•</span>
                   <span className="font-mono uppercase text-[9px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold">
                     {log.action}
                   </span>
+                  {log.entityName && (
+                    <>
+                      <span>•</span>
+                      <span className="text-[10px] text-slate-500 truncate max-w-[200px]">
+                        {log.entityName}
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

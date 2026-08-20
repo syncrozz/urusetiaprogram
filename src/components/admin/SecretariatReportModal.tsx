@@ -152,8 +152,9 @@ export const SecretariatReportModal: React.FC<SecretariatReportModalProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                  {program.units.map((u) => {
-                    const incompleteReqs = u.requirements.filter((r) => r.status !== 'COMPLETED');
+                  {(program?.units || []).map((u) => {
+                    const reqs = Array.isArray(u?.requirements) ? u.requirements : [];
+                    const incompleteReqs = reqs.filter((r) => r.status !== 'COMPLETED');
 
                     return (
                       <tr key={u.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">

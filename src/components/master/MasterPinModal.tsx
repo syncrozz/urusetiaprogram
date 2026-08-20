@@ -90,9 +90,9 @@ export const MasterPinModal: React.FC<MasterPinModalProps> = ({ isOpen, onClose,
             )}
           </div>
 
-          <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-300 flex items-start gap-2">
-            <span className="font-bold">Nota Sistem:</span>
-            <span>PIN keselamatan lalai untuk persekitaran ini ialah <strong>5313</strong>.</span>
+          <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2">
+            <span className="font-bold">Kawalan Keselamatan:</span>
+            <span>Sila masukkan PIN keselamatan 4-digit yang telah ditetapkan.</span>
           </div>
 
           <div className="flex items-center gap-3 pt-2">

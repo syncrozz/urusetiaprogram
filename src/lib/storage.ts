@@ -44,16 +44,21 @@ function loadInitialState(): AppState {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed.programs && parsed.templates && parsed.categories) {
+        // Merge or upgrade people to ensure new fields and initial students are present
+        const mergedPeople = Array.isArray(parsed.people) && parsed.people.length >= DEMO_PEOPLE.length
+          ? parsed.people
+          : DEMO_PEOPLE;
+
         return {
           categories: parsed.categories || INITIAL_CATEGORIES,
           templates: parsed.templates || INITIAL_TEMPLATES,
           programs: parsed.programs || INITIAL_PROGRAMS,
-          people: parsed.people || DEMO_PEOPLE,
+          people: mergedPeople,
           updates: parsed.updates || INITIAL_UPDATES,
           logs: parsed.logs || INITIAL_LOGS,
           authSession: parsed.authSession || {
             role: 'ADMIN',
-            person: DEMO_PEOPLE.find((p) => p.role === 'ADMIN') || DEMO_PEOPLE[5],
+            person: mergedPeople.find((p: Person) => p.role === 'ADMIN') || DEMO_PEOPLE[DEMO_PEOPLE.length - 1],
             programId: 'prog-theatre-2026',
             isMasterUnlocked: false,
           },
@@ -74,7 +79,7 @@ function loadInitialState(): AppState {
     logs: INITIAL_LOGS,
     authSession: {
       role: 'ADMIN',
-      person: DEMO_PEOPLE.find((p) => p.role === 'ADMIN') || DEMO_PEOPLE[5],
+      person: DEMO_PEOPLE.find((p) => p.role === 'ADMIN') || DEMO_PEOPLE[DEMO_PEOPLE.length - 1],
       programId: 'prog-theatre-2026',
       isMasterUnlocked: false,
     },
@@ -117,19 +122,35 @@ export const secretariatStore = {
     saveState();
   },
 
-  loginAsLeader(studentIdOrIc: string): { success: boolean; message: string; person?: Person; unit?: ProgramUnit; program?: Program } {
-    const cleanInput = studentIdOrIc.trim().toLowerCase();
+  loginAsLeader(studentIdOrIcOrEmail: string): { success: boolean; message: string; person?: Person; unit?: ProgramUnit; program?: Program } {
+    const rawInput = studentIdOrIcOrEmail.trim();
+    const cleanInput = rawInput.toLowerCase();
+    const alphaNumInput = cleanInput.replace(/[^a-z0-9]/g, '');
     
     // Find matching person
-    const foundPerson = currentState.people.find(
-      (p) =>
-        p.studentId.toLowerCase() === cleanInput ||
-        p.icLast4.toLowerCase() === cleanInput ||
-        p.studentId.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanInput.replace(/[^a-z0-9]/g, '')
-    );
+    const foundPerson = currentState.people.find((p) => {
+      const pId = (p.studentId || '').toLowerCase();
+      const pIdAlpha = pId.replace(/[^a-z0-9]/g, '');
+      const pLast4 = (p.icLast4 || '').toLowerCase();
+      const pGmail = (p.gmail || '').toLowerCase();
+      const pEmail = (p.email || '').toLowerCase();
+      const pIC = (p.icNumber || '').toLowerCase();
+      const pICAlpha = pIC.replace(/[^a-z0-9]/g, '');
+
+      return (
+        pId === cleanInput ||
+        pIdAlpha === alphaNumInput ||
+        pLast4 === cleanInput ||
+        pGmail === cleanInput ||
+        pEmail === cleanInput ||
+        pIC === cleanInput ||
+        pICAlpha === alphaNumInput ||
+        (cleanInput.length >= 4 && pLast4 === cleanInput.slice(-4))
+      );
+    });
 
     if (!foundPerson) {
-      return { success: false, message: 'ID Pelajar atau 4 Digit IC tidak ditemui dalam rekod lantikan Ketua Unit.' };
+      return { success: false, message: 'ID Pelajar, 4 Digit IC, atau Gmail tidak ditemui dalam rekod lantikan Ketua Unit.' };
     }
 
     // Find assigned unit across active programs
@@ -173,7 +194,7 @@ export const secretariatStore = {
       entityType: 'AUTH',
       entityId: assignedUnit?.id || foundPerson.id,
       entityName: `${foundPerson.fullName} (${assignedUnit?.name || 'Unit'})`,
-      details: `Ketua Unit berjaya log masuk untuk program ${assignedProgram?.name || 'Program'}.`,
+      details: `Ketua Unit [${foundPerson.fullName}] (${foundPerson.studentId}) berjaya log masuk untuk program ${assignedProgram?.name || 'Program'}.`,
     });
 
     saveState();
@@ -821,11 +842,115 @@ export const secretariatStore = {
   addNewPerson(person: Omit<Person, 'id'>): Person {
     const newPerson: Person = {
       ...person,
-      id: `usr-${Date.now()}`,
+      id: `usr-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
     };
     currentState.people.push(newPerson);
+
+    this.addActivityLog({
+      action: 'Daftar Maklumat Pelajar/Ketua Unit',
+      entityType: 'AUTH',
+      entityId: newPerson.id,
+      entityName: newPerson.fullName,
+      details: `Pelajar ${newPerson.fullName} (${newPerson.studentId}) berjaya didaftarkan.`,
+    });
+
     saveState();
     return newPerson;
+  },
+
+  updatePerson(personId: string, updated: Partial<Person>): boolean {
+    const idx = currentState.people.findIndex((p) => p.id === personId);
+    if (idx === -1) return false;
+
+    currentState.people[idx] = {
+      ...currentState.people[idx],
+      ...updated,
+    };
+
+    // Update references in program units
+    currentState.programs.forEach((prog) => {
+      prog.units.forEach((unit) => {
+        if (unit.leaderId === personId) {
+          unit.leader = currentState.people[idx];
+        }
+      });
+    });
+
+    this.addActivityLog({
+      action: 'Kemaskini Profil Pelajar',
+      entityType: 'AUTH',
+      entityId: personId,
+      entityName: currentState.people[idx].fullName,
+      details: `Profil ${currentState.people[idx].fullName} dikemaskini.`,
+    });
+
+    saveState();
+    return true;
+  },
+
+  deletePerson(personId: string): boolean {
+    const person = currentState.people.find((p) => p.id === personId);
+    if (!person) return false;
+
+    currentState.people = currentState.people.filter((p) => p.id !== personId);
+
+    // Detach from units
+    currentState.programs.forEach((prog) => {
+      prog.units.forEach((unit) => {
+        if (unit.leaderId === personId) {
+          unit.leaderId = undefined;
+          unit.leader = undefined;
+        }
+      });
+    });
+
+    this.addActivityLog({
+      action: 'Padam Rekod Pelajar',
+      entityType: 'AUTH',
+      entityId: personId,
+      entityName: person.fullName,
+      details: `Rekod pelajar ${person.fullName} telah dipadam.`,
+    });
+
+    saveState();
+    return true;
+  },
+
+  importPeople(newPeople: Person[], mode: 'APPEND' | 'REPLACE' = 'APPEND'): number {
+    if (mode === 'REPLACE') {
+      const adminPerson = currentState.people.find((p) => p.role === 'ADMIN') || DEMO_PEOPLE[DEMO_PEOPLE.length - 1];
+      const hasAdminInNew = newPeople.some((p) => p.role === 'ADMIN');
+      currentState.people = hasAdminInNew ? newPeople : [...newPeople, adminPerson];
+    } else {
+      // Append / Merge by studentId or icLast4
+      for (const np of newPeople) {
+        const existingIdx = currentState.people.findIndex(
+          (p) =>
+            p.studentId.toLowerCase() === np.studentId.toLowerCase() ||
+            (p.icLast4 && np.icLast4 && p.icLast4 === np.icLast4 && p.fullName.toLowerCase() === np.fullName.toLowerCase())
+        );
+        if (existingIdx >= 0) {
+          currentState.people[existingIdx] = {
+            ...currentState.people[existingIdx],
+            ...np,
+            id: currentState.people[existingIdx].id, // keep original ID
+          };
+        } else {
+          currentState.people.push(np);
+        }
+      }
+    }
+
+    this.addActivityLog({
+      action: 'Import Data Pelajar CSV',
+      entityType: 'AUTH',
+      entityId: `import-${Date.now()}`,
+      entityName: 'CSV Pelajar',
+      details: `Sebanyak ${newPeople.length} rekod pelajar berjaya diimport (${mode === 'REPLACE' ? 'Gantian Penuh' : 'Gabungan/Kemaskini'}).`,
+    });
+
+    saveState();
+    return currentState.people.length;
   },
 
   resetToDefaultSeed() {

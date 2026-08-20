@@ -1,10 +1,10 @@
 import { ProgramUnit, UnitRequirement, PriorityLevel, RequirementStatus } from '../types';
 
-export function calculateUnitProgress(requirements: UnitRequirement[]): number {
-  if (!requirements || requirements.length === 0) return 0;
+export function calculateUnitProgress(requirements?: UnitRequirement[]): number {
+  if (!requirements || !Array.isArray(requirements) || requirements.length === 0) return 0;
   
   // Filter out NOT_APPLICABLE
-  const activeReqs = requirements.filter((r) => r.status !== 'NOT_APPLICABLE');
+  const activeReqs = requirements.filter((r) => r && r.status !== 'NOT_APPLICABLE');
   if (activeReqs.length === 0) return 100;
 
   // Weight critical & high items slightly higher for genuine operational readiness
@@ -34,7 +34,7 @@ export function calculateUnitProgress(requirements: UnitRequirement[]): number {
   return Math.min(100, Math.round(weightedProgress / (totalWeight || 1)));
 }
 
-export function calculateProgramReadiness(units: ProgramUnit[]): {
+export function calculateProgramReadiness(units?: ProgramUnit[]): {
   overallPercentage: number;
   completedUnitsCount: number;
   inProgressUnitsCount: number;
@@ -43,7 +43,7 @@ export function calculateProgramReadiness(units: ProgramUnit[]): {
   criticalIncompleteCount: number;
   isReadyForLaunch: boolean;
 } {
-  if (!units || units.length === 0) {
+  if (!units || !Array.isArray(units) || units.length === 0) {
     return {
       overallPercentage: 0,
       completedUnitsCount: 0,
@@ -63,6 +63,7 @@ export function calculateProgramReadiness(units: ProgramUnit[]): {
   let criticalIncomplete = 0;
 
   units.forEach((u) => {
+    if (!u) return;
     const progress = calculateUnitProgress(u.requirements);
     totalUnitProgress += progress;
 
@@ -79,11 +80,13 @@ export function calculateProgramReadiness(units: ProgramUnit[]): {
     }
 
     // Check critical incomplete requirements
-    u.requirements?.forEach((req) => {
-      if (req.priority === 'CRITICAL' && req.status !== 'COMPLETED' && req.status !== 'NOT_APPLICABLE') {
-        criticalIncomplete++;
-      }
-    });
+    if (Array.isArray(u.requirements)) {
+      u.requirements.forEach((req) => {
+        if (req && req.priority === 'CRITICAL' && req.status !== 'COMPLETED' && req.status !== 'NOT_APPLICABLE') {
+          criticalIncomplete++;
+        }
+      });
+    }
   });
 
   const overallPercentage = Math.round(totalUnitProgress / units.length);

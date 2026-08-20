@@ -33,11 +33,14 @@ export const ProgramList: React.FC<ProgramListProps> = ({
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
 
-  const filteredPrograms = programs.filter((p) => {
+  const safePrograms = Array.isArray(programs) ? programs : [];
+
+  const filteredPrograms = safePrograms.filter((p) => {
+    if (!p) return false;
     const matchesSearch =
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.code.toLowerCase().includes(search.toLowerCase()) ||
-      p.venue.toLowerCase().includes(search.toLowerCase());
+      (p.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (p.code || '').toLowerCase().includes(search.toLowerCase()) ||
+      (p.venue || '').toLowerCase().includes(search.toLowerCase());
 
     if (!matchesSearch) return false;
     if (selectedCategory === 'ALL') return true;

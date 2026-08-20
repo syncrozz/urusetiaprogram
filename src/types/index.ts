@@ -11,10 +11,17 @@ export type UserRole = 'MASTER_ADMIN' | 'ADMIN' | 'KETUA_UNIT' | 'AJK';
 export interface Person {
   id: string;
   fullName: string;
+  nickname?: string;
+  position?: string;
   studentId: string;
+  icNumber?: string;
   icLast4: string;
   phone: string;
+  gmail?: string;
   email: string;
+  gender?: string;
+  programStudy?: string;
+  semester?: string;
   avatar?: string;
   role: UserRole;
   department?: string;

@@ -42,10 +42,12 @@ export const ProgramReadinessOverview: React.FC<ProgramReadinessOverviewProps> =
   const [selectedUnitForAssign, setSelectedUnitForAssign] = useState<ProgramUnit | null>(null);
   const [expandedUnitId, setExpandedUnitId] = useState<string | null>(null);
 
-  const stats = calculateProgramReadiness(program.units);
+  const safeUnits = Array.isArray(program?.units) ? program.units : [];
+  const stats = calculateProgramReadiness(safeUnits);
 
   // Filter logic
-  const filteredUnits = program.units.filter((unit) => {
+  const filteredUnits = safeUnits.filter((unit) => {
+    if (!unit) return false;
     if (filterType === 'ALL') return true;
     if (filterType === 'COMPLETED') return unit.status === 'COMPLETED' || unit.progress >= 100;
     if (filterType === 'IN_PROGRESS') return unit.status === 'IN_PROGRESS' && unit.progress < 100;
@@ -285,7 +287,8 @@ export const ProgramReadinessOverview: React.FC<ProgramReadinessOverviewProps> =
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredUnits.map((unit) => {
           const isExpanded = expandedUnitId === unit.id;
-          const reqCompleted = unit.requirements.filter((r) => r.status === 'COMPLETED').length;
+          const unitReqs = Array.isArray(unit?.requirements) ? unit.requirements : [];
+          const reqCompleted = unitReqs.filter((r) => r.status === 'COMPLETED').length;
 
           return (
             <div
