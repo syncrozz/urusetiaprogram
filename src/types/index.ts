@@ -192,3 +192,5 @@ export interface AuthSession {
   unitId?: string;
   isMasterUnlocked?: boolean;
 }
+
+export * from './competition';

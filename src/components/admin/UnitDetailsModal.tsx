@@ -6,7 +6,7 @@ import { IconRenderer } from '../common/IconRenderer';
 import { EvidenceModal } from '../leader/EvidenceModal';
 import { EscalationModal } from '../leader/EscalationModal';
 import { UnitLeaderAssignModal } from './UnitLeaderAssignModal';
-import { formatDateTime, formatDate } from '../../lib/utils';
+import { formatDateTime, formatDate, getPersonDisplayName } from '../../lib/utils';
 import {
   X,
   UserCheck,
@@ -111,7 +111,7 @@ export const UnitDetailsModal: React.FC<UnitDetailsModalProps> = ({
             </span>
             <div className="flex items-center justify-between mt-0.5">
               <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
-                {unit.leader ? unit.leader.fullName : 'Belum Dilantik'}
+                {unit.leader ? getPersonDisplayName(unit.leader) : 'Belum Dilantik'}
               </span>
               <button
                 onClick={() => setIsAssignLeaderOpen(true)}

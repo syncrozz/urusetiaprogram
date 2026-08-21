@@ -1,6 +1,6 @@
 import React from 'react';
 import { Program } from '../../types';
-import { calculateProgramReadiness, formatDateTime, formatDate } from '../../lib/utils';
+import { calculateProgramReadiness, formatDateTime, formatDate, getPersonDisplayName } from '../../lib/utils';
 import { StatusBadge, PriorityBadge } from '../common/Badge';
 import { Printer, Download, X, Layers, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
 
@@ -59,7 +59,7 @@ export const SecretariatReportModal: React.FC<SecretariatReportModalProps> = ({
           <div className="text-center pb-4 border-b-2 border-slate-900 dark:border-slate-700">
             <div className="flex items-center justify-center gap-2 mb-1">
               <span className="font-mono font-bold text-sm tracking-widest text-emerald-700 dark:text-emerald-400">
-                SYNCROZZ PROGRAM SECRETARIAT
+                PUSAT URUSETIA PROGRAM
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight">
@@ -163,7 +163,7 @@ export const SecretariatReportModal: React.FC<SecretariatReportModalProps> = ({
                         </td>
                         <td className="p-3">
                           <p className="font-semibold text-slate-800 dark:text-slate-200">
-                            {u.leader ? u.leader.fullName : '— Belum Dilantik —'}
+                            {u.leader ? getPersonDisplayName(u.leader) : '— Belum Dilantik —'}
                           </p>
                           {u.leader && (
                             <p className="text-[10px] text-slate-400 font-mono">

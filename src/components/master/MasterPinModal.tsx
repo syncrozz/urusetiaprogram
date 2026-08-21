@@ -53,13 +53,13 @@ export const MasterPinModal: React.FC<MasterPinModalProps> = ({ isOpen, onClose,
             <Lock className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Akses Master Admin</h3>
-            <p className="text-xs text-slate-500">Konfigurasi Master Categories & Program Templates</p>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Akses Pentadbir (Admin Access)</h3>
+            <p className="text-xs text-slate-500">Kebenaran Menambah, Menyunting & Konfigurasi Kontinjen</p>
           </div>
         </div>
 
         <p className="text-sm text-slate-600 dark:text-slate-300 mb-5">
-          Zon ini dikhaskan untuk pengurusan kategori utama, standardisasi template program dan peraturan kesiagaan. Sila masukkan PIN keselamatan sistem.
+          Sila masukkan 4-digit PIN keselamatan sistem untuk membuka kebenaran mendaftar, menyunting atau menggugurkan peserta dan menguruskan konfigurasi kontinjen SOAR 2026.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">

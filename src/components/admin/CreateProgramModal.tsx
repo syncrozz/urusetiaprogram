@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { secretariatStore } from '../../lib/storage';
 import { MainCategory, ProgramTemplate, Person } from '../../types';
+import { getPersonDisplayName } from '../../lib/utils';
 import { IconRenderer } from '../common/IconRenderer';
 import { PriorityBadge } from '../common/Badge';
 import {
@@ -411,7 +412,7 @@ export const CreateProgramModal: React.FC<CreateProgramModalProps> = ({
                           <option value="">-- Pilih Ketua Unit (Pilihan) --</option>
                           {people.map((p) => (
                             <option key={p.id} value={p.id}>
-                              {p.fullName} ({p.studentId})
+                              {getPersonDisplayName(p)} ({p.studentId})
                             </option>
                           ))}
                         </select>

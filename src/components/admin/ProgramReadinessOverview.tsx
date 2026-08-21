@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Program, ProgramUnit, Person } from '../../types';
-import { calculateProgramReadiness, formatDateTime, formatDate } from '../../lib/utils';
+import { calculateProgramReadiness, formatDateTime, formatDate, getPersonDisplayName } from '../../lib/utils';
 import { StatusBadge, PriorityBadge, AssistanceBadge } from '../common/Badge';
 import { IconRenderer } from '../common/IconRenderer';
 import { UnitLeaderAssignModal } from './UnitLeaderAssignModal';
@@ -355,11 +355,11 @@ export const ProgramReadinessOverview: React.FC<ProgramReadinessOverviewProps> =
                 <div className="p-2 sm:p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/80 mb-3 flex items-center justify-between gap-2 text-xs w-full min-w-0">
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <div className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold shrink-0 text-xs">
-                      {unit.leader ? unit.leader.fullName.charAt(0) : '?'}
+                      {unit.leader ? getPersonDisplayName(unit.leader).charAt(0) : '?'}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-bold text-slate-800 dark:text-slate-200 truncate text-xs">
-                        {unit.leader ? unit.leader.fullName : 'Belum Ada Ketua Unit'}
+                        {unit.leader ? getPersonDisplayName(unit.leader) : 'Belum Ada Ketua Unit'}
                       </p>
                       <p className="text-[10px] text-slate-500 font-mono truncate">
                         {unit.leader ? `ID: ${unit.leader.studentId} • Tel: ${unit.leader.phone}` : 'Klik untuk melantik Ketua'}

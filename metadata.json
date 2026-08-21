@@ -1,6 +1,6 @@
 {
-  "name": "Syncrozz Program Secretariat",
-  "description": "Platform Pengurusan & Kesediaan Urusetia Program Berasaskan Unit, Templat dan Hab Import/Eksport CSV Pelajar",
+  "name": "SOAR 2026 KPMBP",
+  "description": "Platform Pengurusan Kesiapsiagaan Kontinjen SOAR 2026 KPMBP — Command Dashboard, 5 Dimensi Readiness, Pasukan & Peserta, Jadual & Latihan, serta Logistik & Pegawai",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

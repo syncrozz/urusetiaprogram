@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { secretariatStore } from '../../lib/storage';
 import { Person } from '../../types';
+import { getPersonDisplayName } from '../../lib/utils';
 import { UserCheck, Shield, KeyRound, ArrowRight, Sparkles, X, CheckCircle2 } from 'lucide-react';
 
 interface LeaderLoginModalProps {
@@ -133,7 +134,7 @@ export const LeaderLoginModal: React.FC<LeaderLoginModalProps> = ({ isOpen, onCl
                 >
                   <div className="min-w-0 pr-2">
                     <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-emerald-700">
-                      {leader.nickname ? `${leader.nickname} (${leader.fullName.split(' ')[0]})` : leader.fullName}
+                      {getPersonDisplayName(leader)}
                     </p>
                     <p className="text-[11px] text-slate-500 font-mono">
                       ID: {leader.studentId} • IC: {leader.icLast4}

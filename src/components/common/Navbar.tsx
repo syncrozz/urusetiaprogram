@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Program, AuthSession, Person } from '../../types';
 import { secretariatStore } from '../../lib/storage';
+import { getPersonDisplayName } from '../../lib/utils';
 import { usePWAInstall } from '../../lib/pwa';
 import {
   Layers,
@@ -16,6 +17,11 @@ import {
   Sparkles,
   Smartphone,
   Download,
+  Trophy,
+  Users,
+  Calendar,
+  Bus,
+  ClipboardList,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -75,14 +81,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-bold tracking-tight text-sm sm:text-lg text-white font-mono">
-                  SYNCROZZ
+                  SOAR 2026
                 </span>
                 <span className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded">
-                  SECRETARIAT
+                  KPMBP
                 </span>
               </div>
               <p className="text-[10px] text-slate-400 font-medium tracking-wide hidden md:block">
-                Rancang • Urus • Pantau • Selesai
+                Pusat Kesiapsiagaan Kontinjen
               </p>
             </div>
           </div>
@@ -168,7 +174,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={triggerInstall}
                 className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-xs animate-bounce"
-                title="Pasang aplikasi Syncrozz ke skrin utama"
+                title="Pasang aplikasi ke skrin utama"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Pasang App (PWA)</span>
@@ -186,54 +192,76 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>Laporan Urusetia</span>
             </button>
 
-            {/* Role Menu Selector */}
+            {/* Role Menu Selector / Single Admin Access Trigger */}
             <div className="relative">
-              <button
-                onClick={() => setShowRoleMenu(!showRoleMenu)}
-                className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
-                  authSession.role === 'MASTER_ADMIN'
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                    : authSession.role === 'KETUA_UNIT'
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                    : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700'
-                }`}
-              >
-                {authSession.role === 'MASTER_ADMIN' && <Lock className="w-3.5 h-3.5 text-emerald-400" />}
-                {authSession.role === 'KETUA_UNIT' && <UserCheck className="w-3.5 h-3.5 text-emerald-400" />}
-                {authSession.role === 'ADMIN' && <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />}
-
-                <span className="hidden sm:inline">
-                  {authSession.role === 'MASTER_ADMIN'
-                    ? 'Master Admin'
-                    : authSession.role === 'KETUA_UNIT'
-                    ? authSession.person?.fullName.split(' ')[0] || 'Ketua Unit'
-                    : 'Admin Program'}
-                </span>
-                <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400" />
-              </button>
+              {authSession.role === 'MASTER_ADMIN' || authSession.isMasterUnlocked ? (
+                <div className="flex items-center bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-0.5">
+                  <button
+                    id="admin-access-active-btn"
+                    onClick={() => setShowRoleMenu(!showRoleMenu)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-bold transition active:scale-95"
+                    title="Akses Admin Sedang Aktif. Klik untuk menu atau kunci semula."
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 -ml-3.5" />
+                    <span>Akses Admin: AKTIF</span>
+                    <ChevronDown className="w-3 h-3 text-emerald-400 ml-0.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  id="admin-access-trigger-btn"
+                  onClick={onOpenMasterPin}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 text-xs font-bold transition shadow-sm"
+                  title="Klik untuk membuka Akses Admin (PIN 5313)"
+                >
+                  <Lock className="w-3.5 h-3.5 text-slate-950" />
+                  <span>Buka Akses Admin</span>
+                </button>
+              )}
 
               {showRoleMenu && (
                 <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 z-50 animate-fadeIn text-xs">
                   <div className="p-2 border-b border-slate-800">
-                    <p className="font-bold text-slate-200">
-                      {authSession.person?.fullName || 'Pengguna'}
-                    </p>
-                    <p className="text-[10px] text-slate-400 font-mono">
-                      Peranan: {authSession.role}
+                    <div className="flex items-center justify-between">
+                      <p className="font-bold text-slate-200">
+                        {getPersonDisplayName(authSession.person, 'Pengguna')}
+                      </p>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        Admin Aktif
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      Status: Kebenaran Menyunting Dibuka
                     </p>
                   </div>
 
                   <div className="py-1 space-y-1">
                     <button
-                      onClick={handleSwitchToAdmin}
-                      className={`w-full text-left p-2 rounded-lg flex items-center gap-2 transition ${
-                        authSession.role === 'ADMIN' ? 'bg-indigo-600/30 text-indigo-200 font-bold' : 'text-slate-300 hover:bg-slate-800'
-                      }`}
+                      onClick={() => {
+                        setShowRoleMenu(false);
+                        setActiveTab('master');
+                      }}
+                      className="w-full text-left p-2 rounded-lg flex items-center gap-2 text-slate-300 hover:bg-slate-800 transition"
                     >
-                      <ShieldCheck className="w-4 h-4 text-indigo-400" />
+                      <Layers className="w-4 h-4 text-amber-400" />
                       <div>
-                        <p className="font-semibold">Mod Admin Urusetia</p>
-                        <p className="text-[10px] text-slate-400">Pantau semua unit & program</p>
+                        <p className="font-semibold text-slate-200">Panel Master Admin</p>
+                        <p className="text-[10px] text-slate-400">Blueprint, Kategori & CSV</p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        secretariatStore.lockMasterAdmin();
+                        setShowRoleMenu(false);
+                      }}
+                      className="w-full text-left p-2 rounded-lg flex items-center gap-2 text-rose-300 hover:bg-rose-950/30 transition"
+                    >
+                      <Lock className="w-4 h-4 text-rose-400" />
+                      <div>
+                        <p className="font-semibold text-rose-300">Kunci Semula Akses Admin</p>
+                        <p className="text-[10px] text-slate-400">Kembali ke mod paparan sahaja</p>
                       </div>
                     </button>
 
@@ -242,45 +270,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                         setShowRoleMenu(false);
                         onOpenLeaderLogin();
                       }}
-                      className={`w-full text-left p-2 rounded-lg flex items-center gap-2 transition ${
-                        authSession.role === 'KETUA_UNIT' ? 'bg-emerald-600/30 text-emerald-200 font-bold' : 'text-slate-300 hover:bg-slate-800'
-                      }`}
+                      className="w-full text-left p-2 rounded-lg flex items-center gap-2 text-slate-300 hover:bg-slate-800 transition"
                     >
-                      <UserCheck className="w-4 h-4 text-emerald-400" />
+                      <UserCheck className="w-4 h-4 text-indigo-400" />
                       <div>
-                        <p className="font-semibold">Log Masuk Ketua Unit</p>
-                        <p className="text-[10px] text-slate-400">ID Pelajar / 4 Digit IC</p>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setShowRoleMenu(false);
-                        onOpenMasterPin();
-                      }}
-                      className={`w-full text-left p-2 rounded-lg flex items-center gap-2 transition ${
-                        authSession.role === 'MASTER_ADMIN' ? 'bg-amber-600/30 text-amber-200 font-bold' : 'text-slate-300 hover:bg-slate-800'
-                      }`}
-                    >
-                      <Lock className="w-4 h-4 text-amber-400" />
-                      <div>
-                        <p className="font-semibold">Konfigurasi Master Admin</p>
-                        <p className="text-[10px] text-slate-400">PIN Keselamatan Diperlukan</p>
+                        <p className="font-semibold text-slate-200">Log Masuk Ketua Unit</p>
+                        <p className="text-[10px] text-slate-400">ID Pelajar / IC 4 Digit</p>
                       </div>
                     </button>
                   </div>
-
-                  {authSession.role !== 'ADMIN' && (
-                    <div className="pt-2 border-t border-slate-800">
-                      <button
-                        onClick={handleLogout}
-                        className="w-full text-left p-2 text-red-300 hover:bg-red-950/40 rounded-lg flex items-center gap-2 font-medium"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        <span>Kembali ke Admin Utama</span>
-                      </button>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -293,6 +291,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="bg-slate-950 border-t border-slate-800 w-full max-w-full overflow-hidden">
           <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full">
             <nav className="flex space-x-1 sm:space-x-2 overflow-x-auto py-1.5 scrollbar-none text-xs font-medium w-full">
+              {/* 1. 🏆 Acara & Kesediaan */}
               <button
                 onClick={() => setActiveTab('readiness')}
                 className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
@@ -302,23 +301,67 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 {activeTab === 'readiness' && <span className="w-1.5 h-1.5 rounded-full bg-white mr-0.5" />}
-                <CheckCircle className="w-3.5 h-3.5" />
-                <span>Kesediaan Program</span>
+                <Trophy className="w-3.5 h-3.5" />
+                <span>Acara & Kesediaan</span>
               </button>
 
+              {/* 2. 👥 Pasukan & Peserta */}
               <button
-                onClick={() => setActiveTab('units')}
+                onClick={() => setActiveTab('squad')}
                 className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
-                  activeTab === 'units'
+                  activeTab === 'squad'
                     ? 'bg-indigo-600 text-white font-bold shadow-xs'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
               >
-                {activeTab === 'units' && <span className="w-1.5 h-1.5 rounded-full bg-white mr-0.5" />}
-                <Layers className="w-3.5 h-3.5" />
-                <span>Unit & Ketua ({activeProgram?.units.length || 0})</span>
+                {activeTab === 'squad' && <span className="w-1.5 h-1.5 rounded-full bg-white mr-0.5" />}
+                <Users className="w-3.5 h-3.5" />
+                <span>Pasukan & Peserta</span>
               </button>
 
+              {/* 3. 📅 Jadual & Latihan */}
+              <button
+                onClick={() => setActiveTab('training')}
+                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                  activeTab === 'training'
+                    ? 'bg-indigo-600 text-white font-bold shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+              >
+                {activeTab === 'training' && <span className="w-1.5 h-1.5 rounded-full bg-white mr-0.5" />}
+                <Calendar className="w-3.5 h-3.5" />
+                <span>Jadual & Latihan</span>
+              </button>
+
+              {/* 4. 📋 Keperluan & Syarat */}
+              <button
+                onClick={() => setActiveTab('requirements')}
+                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                  activeTab === 'requirements'
+                    ? 'bg-indigo-600 text-white font-bold shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+              >
+                {activeTab === 'requirements' && <span className="w-1.5 h-1.5 rounded-full bg-white mr-0.5" />}
+                <ClipboardList className="w-3.5 h-3.5" />
+                <span>Keperluan & Syarat</span>
+              </button>
+
+              {/* 5. 🚌 Logistik & Pegawai */}
+              <button
+                onClick={() => setActiveTab('logistics')}
+                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                  activeTab === 'logistics'
+                    ? 'bg-indigo-600 text-white font-bold shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+              >
+                {activeTab === 'logistics' && <span className="w-1.5 h-1.5 rounded-full bg-white mr-0.5" />}
+                <Bus className="w-3.5 h-3.5" />
+                <span>Logistik & Pegawai</span>
+              </button>
+
+              {/* 6. 🚨 Bantuan / Isu */}
               <button
                 onClick={() => setActiveTab('assistance')}
                 className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
@@ -337,39 +380,30 @@ export const Navbar: React.FC<NavbarProps> = ({
                 )}
               </button>
 
+              {/* Admin Additional Tabs */}
               <button
                 onClick={() => setActiveTab('programs')}
                 className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                   activeTab === 'programs'
-                    ? 'bg-indigo-600 text-white font-bold shadow-xs'
+                    ? 'bg-slate-800 text-white font-bold shadow-xs'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
               >
                 {activeTab === 'programs' && <span className="w-1.5 h-1.5 rounded-full bg-white mr-0.5" />}
-                <span>Semua Program ({programs.length})</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('timeline')}
-                className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
-                  activeTab === 'timeline'
-                    ? 'bg-indigo-600 text-white font-bold shadow-xs'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                }`}
-              >
-                {activeTab === 'timeline' && <span className="w-1.5 h-1.5 rounded-full bg-white mr-0.5" />}
-                <span>Garis Masa & Fasa</span>
+                <Layers className="w-3.5 h-3.5" />
+                <span>Pengurusan Program ({programs.length})</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('activity')}
                 className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                   activeTab === 'activity'
-                    ? 'bg-indigo-600 text-white font-bold shadow-xs'
+                    ? 'bg-slate-800 text-white font-bold shadow-xs'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
               >
                 {activeTab === 'activity' && <span className="w-1.5 h-1.5 rounded-full bg-white mr-0.5" />}
+                <FileText className="w-3.5 h-3.5" />
                 <span>Log Aktiviti</span>
               </button>
 
@@ -383,7 +417,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   }`}
                 >
                   <Lock className="w-3.5 h-3.5" />
-                  <span>Master Config & Template</span>
+                  <span>Master Config</span>
                 </button>
               )}
             </nav>

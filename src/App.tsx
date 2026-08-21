@@ -17,6 +17,11 @@ import { CreateProgramModal } from './components/admin/CreateProgramModal';
 import { SecretariatReportModal } from './components/admin/SecretariatReportModal';
 import { UnitDetailsModal } from './components/admin/UnitDetailsModal';
 import { ProgramReadinessOverview } from './components/admin/ProgramReadinessOverview';
+import { SOARCommandDashboard } from './components/soar/SOARCommandDashboard';
+import { SOARRequirementsView } from './components/soar/SOARRequirementsView';
+import { SOARSquadView } from './components/soar/SOARSquadView';
+import { SOARTrainingView } from './components/soar/SOARTrainingView';
+import { SOARLogisticsView } from './components/soar/SOARLogisticsView';
 import { AssistanceHub } from './components/admin/AssistanceHub';
 import { ProgramList } from './components/admin/ProgramList';
 import { ProgramTimelineView } from './components/admin/ProgramTimelineView';
@@ -111,16 +116,64 @@ export default function App() {
           />
         ) : (
           <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 w-full min-w-0">
+            {/* 1. 🏆 Tab: Acara & Kesediaan (Command Dashboard) */}
             {activeTab === 'readiness' && activeProgram && (
-              <ProgramReadinessOverview
+              <SOARCommandDashboard
                 program={activeProgram}
                 people={storeState.people}
                 onInspectUnit={handleInspectUnit}
                 onOpenAssistanceTab={() => setActiveTab('assistance')}
-                onOpenSecretariatReport={() => setIsSecretariatReportOpen(true)}
+                onOpenRequirementsTab={() => setActiveTab('requirements')}
               />
             )}
 
+            {/* 2. 👥 Tab: Pasukan & Peserta */}
+            {activeTab === 'squad' && activeProgram && (
+              <SOARSquadView
+                program={activeProgram}
+                people={storeState.people}
+                onInspectUnit={handleInspectUnit}
+                onOpenTrainingTab={() => setActiveTab('training')}
+                onOpenMasterPin={() => setIsMasterPinOpen(true)}
+              />
+            )}
+
+            {/* 3. 📅 Tab: Jadual & Latihan */}
+            {activeTab === 'training' && activeProgram && (
+              <SOARTrainingView
+                program={activeProgram}
+                people={storeState.people}
+                onOpenSquadTab={() => setActiveTab('squad')}
+                onOpenMasterPin={() => setIsMasterPinOpen(true)}
+              />
+            )}
+
+            {/* 4. 📋 Tab: Keperluan & Syarat */}
+            {activeTab === 'requirements' && activeProgram && (
+              <SOARRequirementsView
+                program={activeProgram}
+                onInspectUnit={handleInspectUnit}
+              />
+            )}
+
+            {/* 5. 🚌 Tab: Logistik & Pegawai */}
+            {activeTab === 'logistics' && activeProgram && (
+              <SOARLogisticsView
+                program={activeProgram}
+                people={storeState.people}
+                onBackToDashboard={() => setActiveTab('readiness')}
+              />
+            )}
+
+            {/* 6. 🚨 Tab: Bantuan & Isu */}
+            {activeTab === 'assistance' && activeProgram && (
+              <AssistanceHub
+                program={activeProgram}
+                onInspectUnit={handleInspectUnit}
+              />
+            )}
+
+            {/* Admin Extra Tabs */}
             {activeTab === 'units' && activeProgram && (
               <ProgramReadinessOverview
                 program={activeProgram}
@@ -128,13 +181,6 @@ export default function App() {
                 onInspectUnit={handleInspectUnit}
                 onOpenAssistanceTab={() => setActiveTab('assistance')}
                 onOpenSecretariatReport={() => setIsSecretariatReportOpen(true)}
-              />
-            )}
-
-            {activeTab === 'assistance' && activeProgram && (
-              <AssistanceHub
-                program={activeProgram}
-                onInspectUnit={handleInspectUnit}
               />
             )}
 
@@ -174,6 +220,26 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* Platform Footer — Kekalkan identiti Syncrozz pada bahagian footer sahaja */}
+      <footer className="mt-auto py-6 border-t border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xs text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+          <div>
+            <p className="font-semibold text-slate-700 dark:text-slate-300">
+              SOAR 2026 • Kolej Profesional MARA Bandar Penawar
+            </p>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Pusat Kawalan Kesiapsiagaan & Pengurusan 5 Acara Kontinjen
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-400">
+            <span>Dikuasakan oleh</span>
+            <span className="font-bold tracking-widest font-mono text-indigo-600 dark:text-indigo-400 text-xs">
+              SYNCROZZ
+            </span>
+          </div>
+        </div>
+      </footer>
 
       {/* Global Modals */}
       <MasterPinModal

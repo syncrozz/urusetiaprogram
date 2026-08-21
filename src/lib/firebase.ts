@@ -1,6 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
-  initializeFirestore,
   getFirestore,
   doc,
   getDoc,
@@ -13,30 +12,12 @@ import firebaseConfig from '../../firebase-applet-config.json';
 // Initialize Firebase App instance safely
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Cloud Firestore with experimentalForceLongPolling to prevent WebChannel stream disconnection errors in iframe/sandboxed environments
-let db: any;
-try {
-  if (firebaseConfig.firestoreDatabaseId) {
-    db = initializeFirestore(
-      app,
-      {
-        experimentalForceLongPolling: true,
-      },
-      firebaseConfig.firestoreDatabaseId
-    );
-  } else {
-    db = initializeFirestore(app, {
-      experimentalForceLongPolling: true,
-    });
-  }
-} catch (e) {
-  // If already initialized, retrieve existing instance
-  db = firebaseConfig.firestoreDatabaseId
-    ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
-    : getFirestore(app);
-}
+// Initialize Cloud Firestore matching skill guidelines
+export const db = firebaseConfig.firestoreDatabaseId
+  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
+  : getFirestore(app);
 
-export { app, db };
+export { app };
 
 const STATE_DOC_PATH = 'system_state';
 const STATE_DOC_ID = 'secretariat_main';
@@ -63,12 +44,21 @@ export async function pushStateToFirebase(stateData: any): Promise<boolean> {
       people: stateData.people || [],
       updates: stateData.updates || [],
       logs: stateData.logs || [],
+      participantProfiles: stateData.participantProfiles || [],
+      eventMemberships: stateData.eventMemberships || [],
+      trainingSessions: stateData.trainingSessions || [],
+      trainingAttendanceLogs: stateData.trainingAttendanceLogs || [],
+      competitionEventConfigs: stateData.competitionEventConfigs || [],
       updatedAt: new Date().toISOString(),
     };
     await setDoc(docRef, payload, { merge: true });
     return true;
   } catch (err: any) {
-    console.error('[Firebase Sync] Push failed:', err);
+    if (err?.code === 'unavailable' || err?.message?.includes('offline') || err?.message?.includes('unavailable')) {
+      console.info('[Firebase Sync] Offline mode: state saved locally, will sync when reconnected.');
+    } else {
+      console.warn('[Firebase Sync] Push warning:', err);
+    }
     return false;
   }
 }
@@ -85,7 +75,11 @@ export async function fetchStateFromFirebase(): Promise<any | null> {
     }
     return null;
   } catch (err: any) {
-    console.error('[Firebase Sync] Fetch failed:', err);
+    if (err?.code === 'unavailable' || err?.message?.includes('offline') || err?.message?.includes('unavailable')) {
+      console.info('[Firebase Sync] Operating with local state (offline).');
+    } else {
+      console.warn('[Firebase Sync] Fetch warning:', err);
+    }
     return null;
   }
 }
@@ -106,7 +100,11 @@ export function subscribeToFirebaseState(
       }
     },
     (err) => {
-      console.warn('[Firebase Sync] Real-time listener error:', err);
+      if (err?.code === 'unavailable' || err?.message?.includes('offline') || err?.message?.includes('unavailable')) {
+        console.info('[Firebase Sync] Real-time listener running in offline mode.');
+      } else {
+        console.warn('[Firebase Sync] Real-time listener note:', err);
+      }
       if (onError) onError(err);
     }
   );

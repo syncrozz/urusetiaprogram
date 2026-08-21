@@ -1,4 +1,4 @@
-import { ProgramUnit, UnitRequirement, PriorityLevel, RequirementStatus } from '../types';
+import { ProgramUnit, UnitRequirement, PriorityLevel, RequirementStatus, Person } from '../types';
 
 export function calculateUnitProgress(requirements?: UnitRequirement[]): number {
   if (!requirements || !Array.isArray(requirements) || requirements.length === 0) return 0;
@@ -219,3 +219,38 @@ export function getPriorityBadge(priority: PriorityLevel): {
       };
   }
 }
+
+/**
+ * Mengembalikan nama panggilan (nickname) sahaja untuk paparan ringkas dan kemas.
+ * Sekiranya nama panggilan tiada, mengambil nama pertama/panggilan ringkas daripada nama penuh.
+ */
+export function getPersonDisplayName(
+  person?: Person | { fullName?: string; nickname?: string } | null,
+  fallback = 'Belum Ada Ketua Unit'
+): string {
+  if (!person) return fallback;
+  if (person.nickname && person.nickname.trim()) {
+    return person.nickname.trim();
+  }
+  if (!person.fullName || !person.fullName.trim()) {
+    return fallback;
+  }
+  const cleanName = person.fullName.trim();
+  // If the fullName has brackets like "Nurul Huda (Huda)", extract what's inside
+  const matchBracket = cleanName.match(/\(([^)]+)\)/);
+  if (matchBracket && matchBracket[1] && matchBracket[1].trim()) {
+    return matchBracket[1].trim();
+  }
+  // If fullName has Malay patronymics (bin, binti, bt, b., a/l, a/p), take the part before it
+  const patronymicSplit = cleanName.split(/\s+(?:bin|binti|bt\.?|b\.?|a\/l|a\/p)\s+/i);
+  if (patronymicSplit.length > 0 && patronymicSplit[0].trim()) {
+    const firstPart = patronymicSplit[0].trim();
+    const words = firstPart.split(/\s+/);
+    if (words.length > 2) {
+      return words.slice(0, 2).join(' ');
+    }
+    return firstPart;
+  }
+  return cleanName.split(/\s+/)[0] || cleanName;
+}
+

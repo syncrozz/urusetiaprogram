@@ -12,6 +12,18 @@ import {
   RequirementStatus,
   AssistanceStatus,
   UnitEvidence,
+  ParticipantProfile,
+  EventMembership,
+  TrainingSession,
+  TrainingAttendanceLog,
+  CompetitionEventConfig,
+  SelectionStatus,
+  CompetitionRole,
+  CompetitionReadiness,
+  ContingentLogistics,
+  ContingentOfficer,
+  ContingentVehicle,
+  ReadinessLevel,
 } from '../types';
 import {
   INITIAL_CATEGORIES,
@@ -28,13 +40,20 @@ import { pushStateToFirebase, fetchStateFromFirebase, subscribeToFirebaseState }
 const STORAGE_KEY = 'syncrozz_secretariat_state_v2';
 const MASTER_PIN = '5313';
 
-interface AppState {
+export interface AppState {
   categories: MainCategory[];
   templates: ProgramTemplate[];
   programs: Program[];
   people: Person[];
   updates: UnitUpdate[];
   logs: ActivityLog[];
+  participantProfiles: ParticipantProfile[];
+  eventMemberships: EventMembership[];
+  trainingSessions: TrainingSession[];
+  trainingAttendanceLogs: TrainingAttendanceLog[];
+  competitionEventConfigs: CompetitionEventConfig[];
+  competitionReadiness: CompetitionReadiness[];
+  contingentLogistics: ContingentLogistics[];
   authSession: AuthSession;
   selectedProgramId: string;
 }
@@ -87,13 +106,20 @@ function loadInitialState(): AppState {
           people: userPeople,
           updates: parsed.updates || INITIAL_UPDATES,
           logs: parsed.logs || INITIAL_LOGS,
+          participantProfiles: parsed.participantProfiles || [],
+          eventMemberships: parsed.eventMemberships || [],
+          trainingSessions: parsed.trainingSessions || [],
+          trainingAttendanceLogs: parsed.trainingAttendanceLogs || [],
+          competitionEventConfigs: parsed.competitionEventConfigs || [],
+          competitionReadiness: parsed.competitionReadiness || [],
+          contingentLogistics: parsed.contingentLogistics || [],
           authSession: {
             role: 'ADMIN',
             person: adminPerson,
-            programId: programs[0]?.id || 'prog-theatre-2026',
+            programId: programs[0]?.id || 'prog-soar-2026',
             isMasterUnlocked: false,
           },
-          selectedProgramId: parsed.selectedProgramId || programs[0]?.id || 'prog-theatre-2026',
+          selectedProgramId: parsed.selectedProgramId || programs[0]?.id || 'prog-soar-2026',
         };
       }
     }
@@ -108,13 +134,20 @@ function loadInitialState(): AppState {
     people: [],
     updates: INITIAL_UPDATES,
     logs: INITIAL_LOGS,
+    participantProfiles: [],
+    eventMemberships: [],
+    trainingSessions: [],
+    trainingAttendanceLogs: [],
+    competitionEventConfigs: [],
+    competitionReadiness: [],
+    contingentLogistics: [],
     authSession: {
       role: 'ADMIN',
       person: INITIAL_ADMIN_PROFILE,
-      programId: 'prog-theatre-2026',
+      programId: 'prog-soar-2026',
       isMasterUnlocked: false,
     },
-    selectedProgramId: 'prog-theatre-2026',
+    selectedProgramId: 'prog-soar-2026',
   };
 }
 
@@ -150,6 +183,13 @@ if (typeof window !== 'undefined') {
         currentState.people = (remoteData.people || []).filter((p: Person) => p.role !== 'ADMIN');
         currentState.updates = remoteData.updates || currentState.updates;
         currentState.logs = remoteData.logs || currentState.logs;
+        currentState.participantProfiles = remoteData.participantProfiles || currentState.participantProfiles || [];
+        currentState.eventMemberships = remoteData.eventMemberships || currentState.eventMemberships || [];
+        currentState.trainingSessions = remoteData.trainingSessions || currentState.trainingSessions || [];
+        currentState.trainingAttendanceLogs = remoteData.trainingAttendanceLogs || currentState.trainingAttendanceLogs || [];
+        currentState.competitionEventConfigs = remoteData.competitionEventConfigs || currentState.competitionEventConfigs || [];
+        currentState.competitionReadiness = remoteData.competitionReadiness || currentState.competitionReadiness || [];
+        currentState.contingentLogistics = remoteData.contingentLogistics || currentState.contingentLogistics || [];
 
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
@@ -831,7 +871,7 @@ export const secretariatStore = {
     const newLog: ActivityLog = {
       id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       userId: user?.id || 'usr-system',
-      userName: user?.fullName || 'Sistem Syncrozz',
+      userName: user?.fullName || 'Sistem Urusetia',
       userRole: currentState.authSession.role,
       action: params.action,
       entityType: params.entityType,
@@ -1069,6 +1109,644 @@ export const secretariatStore = {
     saveState();
   },
 
+  // --- PHASE 3: COMPETITION & SQUAD METHODS ---
+  assignUnitLeader(unitId: string, leaderId: string) {
+    for (const prog of currentState.programs) {
+      const unit = prog.units.find((u) => u.id === unitId);
+      if (unit) {
+        unit.leaderId = leaderId;
+        unit.leader = currentState.people.find((p) => p.id === leaderId);
+        unit.lastUpdated = new Date().toISOString();
+        break;
+      }
+    }
+    saveState();
+  },
+
+  getParticipantProfiles(): ParticipantProfile[] {
+    return currentState.participantProfiles || [];
+  },
+
+  getEventMemberships(eventId?: string): EventMembership[] {
+    const list = currentState.eventMemberships || [];
+    if (!eventId) return list;
+    return list.filter((m) => m.eventId === eventId);
+  },
+
+  getTrainingSessions(programId?: string, eventId?: string): TrainingSession[] {
+    let list = currentState.trainingSessions || [];
+    if (programId) {
+      list = list.filter((s) => s.programId === programId);
+    }
+    if (eventId) {
+      list = list.filter((s) => s.eventId === eventId);
+    }
+    // Sort by date and startTime ascending
+    return list.sort((a, b) => `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`));
+  },
+
+  getTrainingAttendanceLogs(sessionId?: string): TrainingAttendanceLog[] {
+    const list = currentState.trainingAttendanceLogs || [];
+    if (!sessionId) return list;
+    return list.filter((l) => l.trainingSessionId === sessionId);
+  },
+
+  getCompetitionEventConfigs(programUnitId?: string): CompetitionEventConfig[] {
+    const list = currentState.competitionEventConfigs || [];
+    if (!programUnitId) return list;
+    return list.filter((c) => c.programUnitId === programUnitId);
+  },
+
+  addParticipantToEvent(params: {
+    personId: string;
+    eventId: string;
+    role: CompetitionRole;
+    selectionStatus?: SelectionStatus;
+    skills?: string[];
+    remarks?: string;
+  }): { success: boolean; membership?: EventMembership; message: string } {
+    const person = currentState.people.find((p) => p.id === params.personId);
+    if (!person) {
+      return { success: false, message: 'Maklumat individu tidak dijumpai.' };
+    }
+
+    // Check if membership already exists in this event
+    const existing = (currentState.eventMemberships || []).find(
+      (m) => m.personId === params.personId && m.eventId === params.eventId
+    );
+    if (existing) {
+      // Update role/status instead of duplicating
+      existing.role = params.role;
+      if (params.selectionStatus) existing.selectionStatus = params.selectionStatus;
+      if (params.remarks !== undefined) existing.remarks = params.remarks;
+      saveState();
+      return { success: true, membership: existing, message: 'Keahlian peserta dalam acara dikemaskini.' };
+    }
+
+    // Ensure ParticipantProfile exists
+    let profile = (currentState.participantProfiles || []).find((p) => p.personId === params.personId);
+    const now = new Date().toISOString();
+    if (!profile) {
+      profile = {
+        id: `pp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        personId: params.personId,
+        talentSkills: params.skills || [],
+        experienceNotes: params.remarks,
+        createdAt: now,
+        updatedAt: now,
+      };
+      if (!currentState.participantProfiles) currentState.participantProfiles = [];
+      currentState.participantProfiles.push(profile);
+    } else if (params.skills && params.skills.length > 0) {
+      profile.talentSkills = Array.from(new Set([...profile.talentSkills, ...params.skills]));
+      profile.updatedAt = now;
+    }
+
+    const newMembership: EventMembership = {
+      id: `em-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      participantProfileId: profile.id,
+      personId: params.personId,
+      eventId: params.eventId,
+      role: params.role,
+      selectionStatus: params.selectionStatus || 'TALENT_POOL',
+      joinedAt: now,
+      remarks: params.remarks,
+    };
+
+    if (!currentState.eventMemberships) currentState.eventMemberships = [];
+    currentState.eventMemberships.push(newMembership);
+
+    this.addActivityLog({
+      action: 'Penambahan Peserta Acara',
+      entityType: 'UNIT',
+      entityId: params.eventId,
+      entityName: person.fullName,
+      details: `Peserta [${person.fullName}] didaftarkan ke dalam acara dengan peranan [${params.role}] dan status pemilihan [${newMembership.selectionStatus}].`,
+    });
+
+    saveState();
+    return { success: true, membership: newMembership, message: 'Peserta berjaya didaftarkan ke dalam pasukan acara.' };
+  },
+
+  createAndAddParticipant(params: {
+    personData: Omit<Person, 'id' | 'role'>;
+    eventId: string;
+    role: CompetitionRole;
+    selectionStatus?: SelectionStatus;
+    skills?: string[];
+    remarks?: string;
+  }): { success: boolean; membership?: EventMembership; person?: Person; message: string } {
+    // 1. Create or find existing Person
+    const existing = currentState.people.find(
+      (p) =>
+        p.studentId.trim().toLowerCase() === params.personData.studentId.trim().toLowerCase() ||
+        (p.icLast4 && params.personData.icLast4 && p.icLast4 === params.personData.icLast4)
+    );
+
+    let targetPerson: Person;
+    if (existing) {
+      targetPerson = existing;
+    } else {
+      targetPerson = {
+        ...params.personData,
+        id: `usr-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        role: 'AJK',
+      };
+      currentState.people.push(targetPerson);
+    }
+
+    // 2. Add to event
+    const res = this.addParticipantToEvent({
+      personId: targetPerson.id,
+      eventId: params.eventId,
+      role: params.role,
+      selectionStatus: params.selectionStatus,
+      skills: params.skills,
+      remarks: params.remarks,
+    });
+
+    return {
+      success: res.success,
+      membership: res.membership,
+      person: targetPerson,
+      message: res.message,
+    };
+  },
+
+  updateEventMembership(
+    membershipId: string,
+    updates: Partial<Pick<EventMembership, 'role' | 'selectionStatus' | 'remarks' | 'eventId'>>
+  ): boolean {
+    const mem = (currentState.eventMemberships || []).find((m) => m.id === membershipId);
+    if (!mem) return false;
+
+    if (updates.role) mem.role = updates.role;
+    if (updates.selectionStatus) mem.selectionStatus = updates.selectionStatus;
+    if (updates.remarks !== undefined) mem.remarks = updates.remarks;
+    if (updates.eventId) mem.eventId = updates.eventId;
+
+    const person = currentState.people.find((p) => p.id === mem.personId);
+    this.addActivityLog({
+      action: 'Kemaskini Status Peserta',
+      entityType: 'UNIT',
+      entityId: mem.eventId,
+      entityName: person ? person.fullName : 'Peserta',
+      details: `Status keahlian dikemaskini: Peranan [${mem.role}], Status Pemilihan [${mem.selectionStatus}].`,
+    });
+
+    saveState();
+    return true;
+  },
+
+  updateParticipantProfile(
+    personId: string,
+    updates: Partial<Pick<ParticipantProfile, 'talentSkills' | 'experienceNotes' | 'emergencyContact'>>
+  ): boolean {
+    let profile = (currentState.participantProfiles || []).find((p) => p.personId === personId);
+    const now = new Date().toISOString();
+
+    if (!profile) {
+      profile = {
+        id: `pp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        personId,
+        talentSkills: updates.talentSkills || [],
+        experienceNotes: updates.experienceNotes,
+        emergencyContact: updates.emergencyContact,
+        createdAt: now,
+        updatedAt: now,
+      };
+      if (!currentState.participantProfiles) currentState.participantProfiles = [];
+      currentState.participantProfiles.push(profile);
+    } else {
+      if (updates.talentSkills !== undefined) profile.talentSkills = updates.talentSkills;
+      if (updates.experienceNotes !== undefined) profile.experienceNotes = updates.experienceNotes;
+      if (updates.emergencyContact !== undefined) profile.emergencyContact = updates.emergencyContact;
+      profile.updatedAt = now;
+    }
+
+    saveState();
+    return true;
+  },
+
+  removeEventMembership(membershipId: string): boolean {
+    const idx = (currentState.eventMemberships || []).findIndex((m) => m.id === membershipId);
+    if (idx === -1) return false;
+
+    const [removed] = currentState.eventMemberships.splice(idx, 1);
+    // Also remove any attendance records linked to this membership
+    if (currentState.trainingAttendanceLogs) {
+      currentState.trainingAttendanceLogs = currentState.trainingAttendanceLogs.filter(
+        (l) => l.eventMembershipId !== membershipId
+      );
+    }
+
+    const person = currentState.people.find((p) => p.id === removed.personId);
+    this.addActivityLog({
+      action: 'Gugur Peserta Acara',
+      entityType: 'UNIT',
+      entityId: removed.eventId,
+      entityName: person ? person.fullName : 'Peserta',
+      details: `Penyertaan peserta dikeluarkan daripada acara.`,
+    });
+
+    saveState();
+    return true;
+  },
+
+  createTrainingSession(session: Omit<TrainingSession, 'id' | 'createdAt'>): TrainingSession {
+    const newSession: TrainingSession = {
+      ...session,
+      id: `ts-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      createdAt: new Date().toISOString(),
+    };
+
+    if (!currentState.trainingSessions) currentState.trainingSessions = [];
+    currentState.trainingSessions.push(newSession);
+
+    this.addActivityLog({
+      action: 'Cipta Sesi Latihan',
+      entityType: 'UNIT',
+      entityId: session.eventId,
+      entityName: session.focusArea,
+      details: `Sesi latihan [${session.focusArea}] dijadualkan pada ${session.date} (${session.startTime} - ${session.endTime}) di ${session.venue}.`,
+    });
+
+    saveState();
+    return newSession;
+  },
+
+  updateTrainingSession(sessionId: string, updates: Partial<Omit<TrainingSession, 'id' | 'createdAt'>>): boolean {
+    const session = (currentState.trainingSessions || []).find((s) => s.id === sessionId);
+    if (!session) return false;
+
+    Object.assign(session, updates);
+
+    this.addActivityLog({
+      action: 'Kemaskini Sesi Latihan',
+      entityType: 'UNIT',
+      entityId: session.eventId,
+      entityName: session.focusArea,
+      details: `Maklumat sesi latihan [${session.focusArea}] dikemaskini (Status: ${session.status}).`,
+    });
+
+    saveState();
+    return true;
+  },
+
+  deleteTrainingSession(sessionId: string): boolean {
+    const idx = (currentState.trainingSessions || []).findIndex((s) => s.id === sessionId);
+    if (idx === -1) return false;
+
+    const [removed] = currentState.trainingSessions.splice(idx, 1);
+    if (currentState.trainingAttendanceLogs) {
+      currentState.trainingAttendanceLogs = currentState.trainingAttendanceLogs.filter(
+        (l) => l.trainingSessionId !== sessionId
+      );
+    }
+
+    this.addActivityLog({
+      action: 'Padam Sesi Latihan',
+      entityType: 'UNIT',
+      entityId: removed.eventId,
+      entityName: removed.focusArea,
+      details: `Sesi latihan [${removed.focusArea}] pada ${removed.date} dipadam.`,
+    });
+
+    saveState();
+    return true;
+  },
+
+  recordTrainingAttendance(
+    sessionId: string,
+    logs: { eventMembershipId: string; personId: string; isPresent: boolean; remarks?: string }[]
+  ): boolean {
+    if (!currentState.trainingAttendanceLogs) currentState.trainingAttendanceLogs = [];
+
+    // Remove existing logs for this session
+    currentState.trainingAttendanceLogs = currentState.trainingAttendanceLogs.filter(
+      (l) => l.trainingSessionId !== sessionId
+    );
+
+    // Add new logs
+    logs.forEach((log) => {
+      currentState.trainingAttendanceLogs.push({
+        id: `att-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        trainingSessionId: sessionId,
+        eventMembershipId: log.eventMembershipId,
+        personId: log.personId,
+        isPresent: log.isPresent,
+        remarks: log.remarks,
+      });
+    });
+
+    // Automatically mark session as COMPLETED if not already
+    const session = (currentState.trainingSessions || []).find((s) => s.id === sessionId);
+    if (session && session.status === 'SCHEDULED') {
+      session.status = 'COMPLETED';
+    }
+
+    saveState();
+    return true;
+  },
+
+  updateTrainingCoachNotes(sessionId: string, coachNotes: string): boolean {
+    const session = (currentState.trainingSessions || []).find((s) => s.id === sessionId);
+    if (!session) return false;
+
+    session.coachNotes = coachNotes;
+    saveState();
+    return true;
+  },
+
+  updateCompetitionEventConfig(config: Partial<CompetitionEventConfig> & { programUnitId: string }): CompetitionEventConfig {
+    if (!currentState.competitionEventConfigs) currentState.competitionEventConfigs = [];
+    let existing = currentState.competitionEventConfigs.find((c) => c.programUnitId === config.programUnitId);
+
+    if (existing) {
+      Object.assign(existing, config);
+    } else {
+      existing = {
+        id: `cec-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        programUnitId: config.programUnitId,
+        quotaMain: config.quotaMain ?? 0,
+        quotaReserve: config.quotaReserve ?? 0,
+        coachPersonId: config.coachPersonId,
+        picPersonId: config.picPersonId,
+        competitionDate: config.competitionDate,
+        submissionDeadline: config.submissionDeadline,
+        rulesDocUrl: config.rulesDocUrl,
+        categoryName: config.categoryName,
+      };
+      currentState.competitionEventConfigs.push(existing);
+    }
+
+    saveState();
+    return existing;
+  },
+
+  // --- PHASE 4: LOGISTICS & 5-DIMENSION READINESS METHODS ---
+  getContingentLogistics(programId: string): ContingentLogistics {
+    if (!currentState.contingentLogistics) currentState.contingentLogistics = [];
+    let log = currentState.contingentLogistics.find((l) => l.programId === programId);
+    if (!log) {
+      log = {
+        id: `clog-${programId}`,
+        programId,
+        headOfContingent: undefined,
+        deputyHead: undefined,
+        officers: [],
+        vehicles: [],
+        travel: {
+          departureDate: '2026-09-15',
+          departureTime: '08:00',
+          departureLocation: 'Pusat Islam KPM Bandar Penawar',
+          destinationVenue: 'Belum ditetapkan',
+          returnDate: '2026-09-18',
+          returnTime: '17:00',
+          assemblyPoint: 'Dataran Perdana KPMBP',
+        },
+        accommodation: {
+          hotelName: 'Belum ditetapkan',
+          address: 'Belum ditetapkan',
+          checkInDate: '2026-09-15',
+          checkOutDate: '2026-09-18',
+          roomAllocationNotes: 'Pengasingan bilik kontinjen mengikut jantina dan senarai rasmi.',
+        },
+        welfare: {
+          mealArrangements: 'Sarapan dan Makan Malam di Hotel; Makan Tengahari di Venue Pertandingan',
+          firstAidOfficer: 'Belum ditetapkan',
+          medicalKitReady: false,
+          specialDietNotes: '',
+          emergencyHospital: 'Belum ditetapkan',
+        },
+        equipmentCargoNotes: 'Peralatan muzik, prop pentas dan busana dikumpulkan 1 hari sebelum bertolak.',
+        updatedAt: new Date().toISOString(),
+      };
+      currentState.contingentLogistics.push(log);
+      saveState();
+    }
+    return log;
+  },
+
+  updateContingentLogistics(programId: string, updates: Partial<ContingentLogistics>): ContingentLogistics {
+    const current = this.getContingentLogistics(programId);
+    if (updates.headOfContingent !== undefined) current.headOfContingent = updates.headOfContingent;
+    if (updates.deputyHead !== undefined) current.deputyHead = updates.deputyHead;
+    if (updates.officers !== undefined) current.officers = updates.officers;
+    if (updates.vehicles !== undefined) current.vehicles = updates.vehicles;
+    if (updates.travel !== undefined) current.travel = { ...current.travel, ...updates.travel };
+    if (updates.accommodation !== undefined) current.accommodation = { ...current.accommodation, ...updates.accommodation };
+    if (updates.welfare !== undefined) current.welfare = { ...current.welfare, ...updates.welfare };
+    if (updates.equipmentCargoNotes !== undefined) current.equipmentCargoNotes = updates.equipmentCargoNotes;
+    current.updatedAt = new Date().toISOString();
+
+    this.addActivityLog({
+      action: 'Kemaskini Logistik Kontinjen',
+      entityType: 'PROGRAM',
+      entityId: programId,
+      entityName: 'Logistik & Pegawai',
+      details: 'Maklumat logistik, kenderaan dan pegawai kontinjen dikemaskini.',
+    });
+
+    saveState();
+    return current;
+  },
+
+  get5DReadiness(eventId: string): CompetitionReadiness {
+    if (!currentState.competitionReadiness) currentState.competitionReadiness = [];
+    const manualOverride = currentState.competitionReadiness.find((r) => r.eventId === eventId);
+
+    // Calculate dynamic base from real data
+    let targetUnit: ProgramUnit | undefined = undefined;
+    for (const p of currentState.programs) {
+      const u = p.units?.find((unit) => unit.id === eventId);
+      if (u) {
+        targetUnit = u;
+        break;
+      }
+    }
+
+    const memberships = (currentState.eventMemberships || []).filter((m) => m.eventId === eventId);
+    const sessions = (currentState.trainingSessions || []).filter((s) => s.eventId === eventId);
+    const eventConfig = (currentState.competitionEventConfigs || []).find((c) => c.programUnitId === eventId);
+
+    // 1. Dimension: Participants
+    const selectedCount = memberships.filter(
+      (m) => m.selectionStatus === 'SELECTED' || m.role === 'MAIN_PARTICIPANT'
+    ).length;
+    const quotaMain = eventConfig?.quotaMain || 1;
+    let participantsLevel: ReadinessLevel = 'NOT_READY';
+    if (selectedCount >= quotaMain && (targetUnit?.leaderId || eventConfig?.picPersonId)) {
+      participantsLevel = 'READY';
+    } else if (memberships.length > 0) {
+      participantsLevel = 'NEAR_READY';
+    }
+
+    // 2. Dimension: Training
+    const completedSessions = sessions.filter((s) => s.status === 'COMPLETED').length;
+    let trainingLevel: ReadinessLevel = 'NOT_READY';
+    if (completedSessions >= 2 || sessions.length >= 3) {
+      trainingLevel = 'READY';
+    } else if (sessions.length >= 1) {
+      trainingLevel = 'NEAR_READY';
+    }
+
+    // 3. Dimension: Performance
+    const progress = targetUnit?.progress || 0;
+    let performanceLevel: ReadinessLevel = 'NOT_READY';
+    if (progress >= 80) {
+      performanceLevel = 'READY';
+    } else if (progress >= 45) {
+      performanceLevel = 'NEAR_READY';
+    }
+
+    // 4. Dimension: Technical
+    const reqs = targetUnit?.requirements || [];
+    const techReqs = reqs.filter(
+      (r) =>
+        r.title.toLowerCase().includes('audio') ||
+        r.title.toLowerCase().includes('props') ||
+        r.title.toLowerCase().includes('teknikal') ||
+        r.title.toLowerCase().includes('kostum') ||
+        r.title.toLowerCase().includes('skrip') ||
+        r.title.toLowerCase().includes('arrangement')
+    );
+    const completedTech = techReqs.filter((r) => r.status === 'COMPLETED').length;
+    let technicalLevel: ReadinessLevel = 'NOT_READY';
+    if (techReqs.length > 0 && completedTech === techReqs.length) {
+      technicalLevel = 'READY';
+    } else if (progress >= 60 || completedTech >= 1) {
+      technicalLevel = 'NEAR_READY';
+    }
+
+    // 5. Dimension: Compliance
+    const hasOpenAssistance = targetUnit?.assistanceStatus === 'OPEN';
+    const hasActionRequired = reqs.some((r) => r.status === 'ACTION_REQUIRED');
+    let complianceLevel: ReadinessLevel = 'READY';
+    if (hasOpenAssistance || hasActionRequired) {
+      complianceLevel = 'NOT_READY';
+    } else if (progress < 50) {
+      complianceLevel = 'NEAR_READY';
+    }
+
+    // Overall Calculation (Simple by default)
+    const levels = [
+      manualOverride?.participants || participantsLevel,
+      manualOverride?.training || trainingLevel,
+      manualOverride?.performance || performanceLevel,
+      manualOverride?.technical || technicalLevel,
+      manualOverride?.compliance || complianceLevel,
+    ];
+    const readyCount = levels.filter((l) => l === 'READY').length;
+    const notReadyCount = levels.filter((l) => l === 'NOT_READY').length;
+
+    let overallLevel: ReadinessLevel = 'NEAR_READY';
+    if (readyCount >= 4 && notReadyCount === 0) {
+      overallLevel = 'READY';
+    } else if (notReadyCount >= 2) {
+      overallLevel = 'NOT_READY';
+    }
+
+    return {
+      id: manualOverride?.id || `cr-${eventId}`,
+      eventId,
+      participants: manualOverride?.participants || participantsLevel,
+      training: manualOverride?.training || trainingLevel,
+      performance: manualOverride?.performance || performanceLevel,
+      technical: manualOverride?.technical || technicalLevel,
+      compliance: manualOverride?.compliance || complianceLevel,
+      overall: manualOverride?.overall || overallLevel,
+      notes: manualOverride?.notes || '',
+      updatedAt: manualOverride?.updatedAt || new Date().toISOString(),
+    };
+  },
+
+  update5DReadiness(eventId: string, updates: Partial<CompetitionReadiness>): CompetitionReadiness {
+    if (!currentState.competitionReadiness) currentState.competitionReadiness = [];
+    let existing = currentState.competitionReadiness.find((r) => r.eventId === eventId);
+    const now = new Date().toISOString();
+
+    if (existing) {
+      Object.assign(existing, updates);
+      existing.updatedAt = now;
+    } else {
+      const currentDynamic = this.get5DReadiness(eventId);
+      existing = {
+        ...currentDynamic,
+        ...updates,
+        id: `cr-${eventId}`,
+        eventId,
+        updatedAt: now,
+      };
+      currentState.competitionReadiness.push(existing);
+    }
+
+    this.addActivityLog({
+      action: 'Kemaskini 5D Readiness',
+      entityType: 'UNIT',
+      entityId: eventId,
+      entityName: 'Penilaian Kesiapsiagaan',
+      details: `Penilaian 5 dimensi dikemaskini. Overall: [${existing.overall}].`,
+    });
+
+    saveState();
+    return existing;
+  },
+
+  getContingentOverall5D(programId: string): {
+    overall: ReadinessLevel;
+    participants: ReadinessLevel;
+    training: ReadinessLevel;
+    performance: ReadinessLevel;
+    technical: ReadinessLevel;
+    compliance: ReadinessLevel;
+    readyEventsCount: number;
+    totalEventsCount: number;
+  } {
+    const prog = currentState.programs.find((p) => p.id === programId) || currentState.programs[0];
+    const units = prog?.units || [];
+
+    if (units.length === 0) {
+      return {
+        overall: 'NOT_READY',
+        participants: 'NOT_READY',
+        training: 'NOT_READY',
+        performance: 'NOT_READY',
+        technical: 'NOT_READY',
+        compliance: 'NOT_READY',
+        readyEventsCount: 0,
+        totalEventsCount: 0,
+      };
+    }
+
+    const event5DList = units.map((u) => this.get5DReadiness(u.id));
+    const countLevel = (dim: keyof Pick<CompetitionReadiness, 'participants' | 'training' | 'performance' | 'technical' | 'compliance' | 'overall'>) => {
+      const readies = event5DList.filter((e) => e[dim] === 'READY').length;
+      const notReadies = event5DList.filter((e) => e[dim] === 'NOT_READY').length;
+      if (readies >= Math.ceil(units.length * 0.7) && notReadies === 0) return 'READY';
+      if (notReadies >= 2) return 'NOT_READY';
+      return 'NEAR_READY';
+    };
+
+    const readyEvents = event5DList.filter((e) => e.overall === 'READY').length;
+    const notReadyEvents = event5DList.filter((e) => e.overall === 'NOT_READY').length;
+
+    let overall: ReadinessLevel = 'NEAR_READY';
+    if (readyEvents === units.length) overall = 'READY';
+    else if (notReadyEvents >= 2) overall = 'NOT_READY';
+
+    return {
+      overall,
+      participants: countLevel('participants'),
+      training: countLevel('training'),
+      performance: countLevel('performance'),
+      technical: countLevel('technical'),
+      compliance: countLevel('compliance'),
+      readyEventsCount: readyEvents,
+      totalEventsCount: units.length,
+    };
+  },
+
   resetToDefaultSeed() {
     currentState = {
       categories: JSON.parse(JSON.stringify(INITIAL_CATEGORIES)),
@@ -1077,6 +1755,13 @@ export const secretariatStore = {
       people: [],
       updates: JSON.parse(JSON.stringify(INITIAL_UPDATES)),
       logs: JSON.parse(JSON.stringify(INITIAL_LOGS)),
+      participantProfiles: [],
+      eventMemberships: [],
+      trainingSessions: [],
+      trainingAttendanceLogs: [],
+      competitionEventConfigs: [],
+      competitionReadiness: [],
+      contingentLogistics: [],
       authSession: {
         role: 'ADMIN',
         person: INITIAL_ADMIN_PROFILE,
@@ -1109,6 +1794,13 @@ export const secretariatStore = {
           people: peopleList,
           updates: parsed.updates || [],
           logs: parsed.logs || [],
+          participantProfiles: parsed.participantProfiles || [],
+          eventMemberships: parsed.eventMemberships || [],
+          trainingSessions: parsed.trainingSessions || [],
+          trainingAttendanceLogs: parsed.trainingAttendanceLogs || [],
+          competitionEventConfigs: parsed.competitionEventConfigs || [],
+          competitionReadiness: parsed.competitionReadiness || [],
+          contingentLogistics: parsed.contingentLogistics || [],
           authSession: {
             role: 'ADMIN',
             person: INITIAL_ADMIN_PROFILE,

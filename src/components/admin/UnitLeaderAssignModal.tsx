@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { secretariatStore } from '../../lib/storage';
 import { ProgramUnit, Program, Person } from '../../types';
+import { getPersonDisplayName } from '../../lib/utils';
 import { UserCheck, Search, Plus, Check, X, Phone, Mail, Shield, User } from 'lucide-react';
 
 interface UnitLeaderAssignModalProps {
@@ -112,7 +113,7 @@ export const UnitLeaderAssignModal: React.FC<UnitLeaderAssignModalProps> = ({
                 )}
               </div>
               <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">
-                {unit.leader.fullName} {unit.leader.nickname ? `(${unit.leader.nickname})` : ''}
+                {getPersonDisplayName(unit.leader)} {unit.leader.fullName && unit.leader.fullName !== getPersonDisplayName(unit.leader) ? <span className="text-xs font-normal text-slate-500">({unit.leader.fullName})</span> : ''}
               </p>
               <p className="text-xs text-slate-600 dark:text-slate-300 font-mono mt-0.5">
                 ID: <span className="font-bold">{unit.leader.studentId}</span> • 4 Digit IC: <span className="font-bold">{unit.leader.icLast4}</span>

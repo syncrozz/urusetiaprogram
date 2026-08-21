@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Program, ProgramUnit, UnitRequirement, RequirementStatus, Person, UnitUpdate } from '../../types';
 import { secretariatStore } from '../../lib/storage';
-import { formatDateTime, formatDate } from '../../lib/utils';
+import { formatDateTime, formatDate, getPersonDisplayName } from '../../lib/utils';
 import { StatusBadge, PriorityBadge, AssistanceBadge } from '../common/Badge';
 import { IconRenderer } from '../common/IconRenderer';
 import { EscalationModal } from './EscalationModal';
@@ -184,7 +184,7 @@ export const KetuaUnitPortal: React.FC<KetuaUnitPortalProps> = ({
                   {unit.name}
                 </h1>
                 <p className="text-xs text-slate-300 mt-0.5 flex items-center gap-1.5">
-                  <span className="font-semibold">{currentPerson.fullName}</span>
+                  <span className="font-semibold">{getPersonDisplayName(currentPerson)}</span>
                   <span className="text-slate-400 font-mono">• ID: {currentPerson.studentId}</span>
                 </p>
               </div>

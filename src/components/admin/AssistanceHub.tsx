@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { secretariatStore } from '../../lib/storage';
 import { Program, ProgramUnit, AssistanceStatus } from '../../types';
-import { formatDateTime } from '../../lib/utils';
+import { formatDateTime, getPersonDisplayName } from '../../lib/utils';
 import { IconRenderer } from '../common/IconRenderer';
 import {
   AlertTriangle,
@@ -121,7 +121,7 @@ export const AssistanceHub: React.FC<AssistanceHubProps> = ({ program, onInspect
                       </h4>
                       <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
                         <span className="font-medium text-slate-700 dark:text-slate-300">
-                          {u.leader?.fullName || 'Belum Dilantik'}
+                          {getPersonDisplayName(u.leader, 'Belum Dilantik')}
                         </span>
                         {u.leader?.phone && (
                           <span className="text-slate-400 font-mono">({u.leader.phone})</span>
